@@ -3,7 +3,7 @@
   "version": 1,
   "reviewedAt": "2026-11-04",
   "policy": "Use 0BSD for original software; preserve only the component-specific obligations applicable to included third-party material. No public release authorized by this local build.",
-  "reviewedDependencyLockSha256": "14b9596970cb3a73a8bfd2c01c8e34f978ba113a8945f2cc0e9ba900a718923a",
+  "reviewedDependencyLockSha256": "60b68d1e332d2cab6f4216a3c4ac0b9bce1d68d66a46aebac3957acb6248c8c7",
   "components": [
     {
       "id": "clade-original",
@@ -25,7 +25,8 @@
         "Adaptive Explore: original compact source index, stable nonmetric geometry, viewport detail selection and SVG rendering. OneZoom/Taxonium papers are conceptual background only; no upstream code, document, figure, dependency or new data included.",
         "First-release preparation: original changelog, maintainer release instructions and v0.1.0 release notes. Selected UI screenshots are repository documentation only; browser/source release archives remain image-free.",
         "Repository agent guidance: original development instructions in AGENTS.md, distributed with source packages under 0BSD.",
-        "Geometry maintenance: original versioned validation replay, bounded routing and incidence-completeness fixes, drag QA deferral, regression fixtures and offline guidance; no new third-party material or dependencies."
+        "Geometry maintenance: original versioned validation replay, bounded routing and incidence-completeness fixes, drag QA deferral, regression fixtures and offline guidance; no new third-party material or dependencies.",
+        "0.1.1 release review: package-lock changes only application version metadata; all locked dependency versions, integrity values, licenses and development-only scope are unchanged. Original release notes add no third-party material."
       ],
       "obligations": [],
       "files": [
@@ -48,6 +49,7 @@
         "release/SOURCE_README.md",
         "release/components.json",
         "release/v0.1.0.md",
+        "release/v0.1.1.md",
         "src/app.ts",
         "src/commands.ts",
         "src/datasets.ts",

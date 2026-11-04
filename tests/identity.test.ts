@@ -34,11 +34,13 @@ test('export stamp identifies the exporter without rewriting source, geometry or
   recipe.resolvedFrontierSourceNodeIds = reduction.frontier.map(entry => entry.id);
   const project: Project = { format: 'phylogenetic-tree-studio', version: 1, appVersion: '0.1.0', title: 'Independent input', sourceText: source.text, sourceSha256: source.sha256, provenance: { license: 'Unknown' }, corrections: [], recipe, layout: generateLayout(rooted, reduction, presentation, 'organic'), presentation };
   const before = structuredClone(project), qa = validateGeometry(source, rooted, recipe, reduction, project.layout, presentation);
-  const info: BuildInfo = { format: 'clade-build-info', version: 1, appVersion: '0.1.0', buildId: 'a'.repeat(64), manifest: 'build-manifest.json' };
+  const info: BuildInfo = { format: 'clade-build-info', version: 1, appVersion: '0.1.1', buildId: 'a'.repeat(64), manifest: 'build-manifest.json' };
   const unknown = exportFiles(source, rooted, reduction, project, qa);
   assert.equal(JSON.parse(unknown['software_build.json']).exportingBuild, null);
   const known = exportFiles(source, rooted, reduction, project, qa, info);
   assert.deepEqual(JSON.parse(known['software_build.json']).exportingBuild, info);
+  assert.match(known['README.txt'], /^Phylogenetic Tree Studio 0\.1\.1\n/);
+  assert.match(unknown['README.txt'], /^Phylogenetic Tree Studio 0\.1\.0\n/);
   assert.equal(JSON.parse(known['software_build.json']).authoringHistory, 'not-recorded-in-version-1');
   const group = (svg: string) => svg.match(/<g id="tree-artwork"[\s\S]*?<\/g>/)![0];
   assert.equal(group(known['tree_unlabeled.svg']), group(unknown['tree_unlabeled.svg']));

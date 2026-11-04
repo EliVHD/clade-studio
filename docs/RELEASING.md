@@ -1,89 +1,66 @@
-# Preparing the first private GitHub release
+# Preparing a Clade Studio release
 
-Version: **0.1.0** · Tag: **v0.1.0** · Repository: **[EliVHD/clade-studio](https://github.com/EliVHD/clade-studio)**.
+Current version: **0.1.1** · Tag: **v0.1.1** · Repository: **[EliVHD/clade-studio](https://github.com/EliVHD/clade-studio)**.
 
-The repository was created privately on 4 November 2026. Keep it **Private** and prepare the first release as a **draft** for review. The commands below document the initial setup and release procedure; `npm run release` only creates local files. `"private": true` in `package.json` prevents accidental npm publication; GitHub visibility is a separate repository setting.
+The project is not actively maintained; a release does not promise ongoing support or a release schedule. `npm run release` only creates local files. Publishing a GitHub release requires an explicit owner request. Preserve the repository's configured visibility and all existing release tags and assets.
 
-## 1. Check and package
+## 1. Prepare the source
 
-From the source directory:
+Start from the reviewed, merged repository commit. Update `package.json`, the application version fields in `package-lock.json`, the changelog, README links and version-specific release notes. Register new notes in `release/components.json`.
+
+Review any dependency-lock changes before refreshing `reviewedDependencyLockSha256`. An application-version-only bump may update the lock hash after confirming all dependency versions, integrity values, licenses and development-only scope are unchanged. CLI example exporters derive their software version from `package.json`. The internal legacy V1 project shim and historical fixtures retain their historical version values.
+
+Refresh `SHA256SUMS.txt` for tracked files, including new release inputs and excluding the checksum file itself. Preserve upstream scientific-data bytes and component terms.
+
+## 2. Check and package
 
 ```sh
 npm ci
 npm run check
 npm run release
+sha256sum -c SHA256SUMS.txt
 ```
 
-The release command builds the app, runs the regression suite and checks exact file inventories, source hashes and component licenses. It creates:
+The release command builds the app, runs the regression suite and verifies component licenses, build identity, stale inputs, exact file inventories and payload hashes. It creates:
 
 ```text
-outputs/releases/clade-studio-0.1.0-browser.zip
-outputs/releases/clade-studio-0.1.0-browser.zip.sha256
-outputs/releases/clade-studio-0.1.0-source.zip
-outputs/releases/clade-studio-0.1.0-source.zip.sha256
+outputs/releases/clade-studio-0.1.1-browser.zip
+outputs/releases/clade-studio-0.1.1-browser.zip.sha256
+outputs/releases/clade-studio-0.1.1-source.zip
+outputs/releases/clade-studio-0.1.1-source.zip.sha256
 outputs/releases/browser-manifest.json
 outputs/releases/source-manifest.json
 ```
 
-The browser ZIP is the built app; the source ZIP is a reviewed buildable subset with an image-free README. Each includes its own manifest. Extract the source ZIP into a temporary directory and run `npm ci`, `npm run check` and `npm run build` there to verify a clean checkout. Start either build and follow the in-app Guide for an interactive smoke check when browser access is available.
+Extract the source ZIP into a temporary directory and run `npm ci`, `npm run check` and `npm run build` there. Verify each archive against its internal `release-manifest.json`, and verify the companion download checksums. Exercise affected browser workflows when available; report any unavailable live-browser or font verification accurately.
 
-## 2. Start from a clean repository directory
+Commit the reviewed version changes and refreshed source inventory. Build from that exact commit; do not include installed dependencies, generated outputs, private research, reference pictures or personal projects in Git. The two credited repository screenshots remain documentation only; browser/source release ZIPs are image-free.
 
-Use the prepared `clade-studio-0.1.0-repository.zip` snapshot supplied with this handoff, or extract the reviewed source ZIP into a new directory and add only these repository documentation files from the workspace:
+## 3. Upload a draft tied to the reviewed commit
 
-```text
-README.md                         (replace the source ZIP's shorter README)
-docs/screenshots/README.md
-docs/screenshots/editor.png
-docs/screenshots/explore.png
-```
-
-The changelog, this guide and release notes are already in the source ZIP. The prepared repository snapshot includes the files above and a refreshed `SHA256SUMS.txt`. It is a source snapshot for initializing Git, rather than an additional application download; attach the browser/source ZIPs to the GitHub release.
-
-When assembling the directory manually, leave the archive's root `release-manifest.json` out of Git: it inventories the original source ZIP, and replacing its README changes that inventory. The prepared repository snapshot already omits it. Keep `release/components.json`, which is required to build and package the app.
-
-Keep `private/`, generated `outputs/`, `dist/`, `node_modules/`, personal project files and research reference assets outside the initial commit. `.gitignore` covers these, local credentials and common editor/OS files. Existing handoff plans, historical reports and technical notes remain in the original workspace; the source snapshot includes the required `reports/source_audit.json` only. Never initialize/push the whole handoff workspace as the first repository.
-
-In the clean directory, inspect the initial staging list before committing:
+Verify the target repository and existing tags/releases before uploading. Use a new tag for each version. With the release commit checked out:
 
 ```sh
-git init -b main
-git add .
-git diff --cached --stat
-git diff --cached --name-only
-git commit -m "Prepare Clade Studio 0.1.0"
-```
-
-## 3. Connect the private repository
-
-The empty repository already exists. With GitHub CLI installed and authenticated, verify its visibility, then connect and push from the clean Git directory:
-
-```sh
-gh repo view EliVHD/clade-studio --json nameWithOwner,visibility,isPrivate,url
-git remote add origin https://github.com/EliVHD/clade-studio.git
-git push -u origin main
-```
-
-Verify that the response reports **PRIVATE** and **isPrivate: true** before pushing or uploading release assets. If `origin` is already configured, inspect it with `git remote -v` instead of adding it again. Leave visibility private during review. [GitHub CLI documents the repository inspection options](https://cli.github.com/manual/gh_repo_view).
-
-## 4. Tag and create a draft release
-
-Copy the four browser/source ZIP and checksum files from step 1 into the clean repository's ignored `outputs/releases/` directory. The asset paths below refer to those exact files. Run the release commands from the clean repository so the tag names its reviewed commit:
-
-```sh
-git tag -a v0.1.0 -m "Clade Studio 0.1.0"
-git push origin v0.1.0
-gh release create v0.1.0 \
-  outputs/releases/clade-studio-0.1.0-browser.zip \
-  outputs/releases/clade-studio-0.1.0-browser.zip.sha256 \
-  outputs/releases/clade-studio-0.1.0-source.zip \
-  outputs/releases/clade-studio-0.1.0-source.zip.sha256 \
+gh release create v0.1.1 \
+  outputs/releases/clade-studio-0.1.1-browser.zip \
+  outputs/releases/clade-studio-0.1.1-browser.zip.sha256 \
+  outputs/releases/clade-studio-0.1.1-source.zip \
+  outputs/releases/clade-studio-0.1.1-source.zip.sha256 \
   --repo EliVHD/clade-studio \
-  --verify-tag --draft \
-  --title "Clade Studio 0.1.0" \
-  --notes-file release/v0.1.0.md
+  --target "$(git rev-parse HEAD)" \
+  --draft --prerelease \
+  --title "Clade Studio 0.1.1" \
+  --notes-file release/v0.1.1.md
 ```
 
-`--verify-tag` requires the tag to exist remotely. `--draft` leaves the release unpublished. Review the rendered notes, four uploaded assets and repository visibility in GitHub before publishing the release within the private repository. [GitHub CLI documents draft releases and asset uploads](https://cli.github.com/manual/gh_release_create).
+When the tag does not exist, GitHub creates it at the specified commit. If an annotated tag is prepared separately, push that exact tag and use `--verify-tag` instead. Never move an existing release tag or silently replace its downloads.
 
-Making the repository public is a separate later decision; it is not part of these steps.
+## 4. Verify and publish
+
+Review the draft's notes, target commit, prerelease status and four uploaded assets. Download the assets and compare their hashes with the verified local files. Only after those checks, and under the owner's release request, publish:
+
+```sh
+gh release edit v0.1.1 --repo EliVHD/clade-studio --draft=false --prerelease
+```
+
+Verify the published URL and asset sizes/hashes. Retain the prerelease classification unless the owner requests a stable release. [GitHub CLI release documentation](https://cli.github.com/manual/gh_release_create).

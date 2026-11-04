@@ -1,5 +1,5 @@
 import { defaultUnrootedSpec, projectUnrooted } from '../src/structured/unrooted.ts';
-import { mkdir,writeFile } from 'node:fs/promises';
+import { mkdir,readFile,writeFile } from 'node:fs/promises';
 import { classificationSample, sampleTree } from '../src/structured/example.ts';
 import { projectClassification } from '../src/structured/classification.ts';
 import { projectTree } from '../src/structured/projection.ts';
@@ -15,10 +15,11 @@ import { contentDigest } from '../src/provenance/identity.ts';
 import type { StructuredSettings,ProjectionSpec,MetricSpec } from '../src/structured/types.ts';
 const {filesUnder}=await import('./distribution-policy.mjs');
 const {readRegular,sha256}=await import('./release-manifest.mjs');
-const paths=[...(await filesUnder('src')).map(name=>`src/${name}`),'tools/export-structured-example.ts','tools/distribution-policy.mjs','tools/release-manifest.mjs','package-lock.json'].sort();
+const paths=[...(await filesUnder('src')).map(name=>`src/${name}`),'tools/export-structured-example.ts','tools/distribution-policy.mjs','tools/release-manifest.mjs','package-lock.json','package.json'].sort();
 const files=await Promise.all(paths.map(async path=>{const bytes=await readRegular('.',path);return{path,bytes:bytes.length,sha256:sha256(bytes)};}));
-const manifest={format:'clade-build-manifest' as const,version:1 as const,appVersion:'0.1.0',files};
-const build={format:'clade-build-info' as const,version:1 as const,appVersion:'0.1.0',buildId:await contentDigest(manifest),manifest:'build-manifest.json' as const};
+const {version:appVersion}=JSON.parse(await readFile('package.json','utf8'));
+const manifest={format:'clade-build-manifest' as const,version:1 as const,appVersion,files};
+const build={format:'clade-build-info' as const,version:1 as const,appVersion,buildId:await contentDigest(manifest),manifest:'build-manifest.json' as const};
 const example=await sampleTree(build),summary=[];
 for(const kind of ['rectangular','circular','fan'] as const){
   const settings:StructuredSettings={...DEFAULT_STRUCTURED,kind,sweepDeg:kind==='fan'?270:360};

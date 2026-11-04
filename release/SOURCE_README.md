@@ -6,9 +6,9 @@
 
 A local browser app for turning supplied phylogenetic trees and classification hierarchies into editable drawings with sources and methods attached. Import Newick, select organisms or groups, choose a layout, refine and export SVG artwork.
 
-The app runs locally without accounts, a backend or file uploads. Relationships come from the supplied tree; there is no online organism lookup or relationship inference. Version 0.1.0 is the first release.
+The app runs locally without accounts, a backend or file uploads. Relationships come from the supplied tree; there is no online organism lookup or relationship inference. Version 0.1.1 is a maintenance prerelease.
 
-Repository: [EliVHD/clade-studio](https://github.com/EliVHD/clade-studio). Access is initially private.
+Repository: [EliVHD/clade-studio](https://github.com/EliVHD/clade-studio).
 
 ## Quick start
 
@@ -45,7 +45,7 @@ Use **Guide** in the app header for the full walkthrough and troubleshooting, or
 
 **Explore** opens a separate read-only rectangular, circular or fan viewer of the complete source. Scroll to zoom, drag to pan, search any name/source ID and double-click to focus. Shaded groups show exact tip counts. **← Editor** returns to the unchanged artwork; export always uses accepted editor geometry.
 
-Authoring supports rectangular/circular/fan cladograms, documented source-distance phylograms, supplied-rank classifications and unrooted equal-angle/daylight views. Artistic copies allow independent free placement. Organic additionally supports manual curves, endpoint borders, local image overlays and fitting previews.
+Authoring supports rectangular/circular/fan cladograms, documented source-distance phylograms, supplied-rank classifications and unrooted equal-angle/daylight views. Artistic copies allow independent free placement. Free arrangement additionally supports manual curves, endpoint borders, local image overlays and fitting previews.
 
 Cladogram and Explore depth is nonmetric. Distance layouts require source units/evidence; classification links retain supplied membership meaning. The tool does not infer dates, ranks or missing relationships. Layout/fitting can leave overlaps. Draft findings remain visible; Checked refers to implemented geometry/coverage checks, not authentication of biological claims.
 
@@ -62,7 +62,7 @@ npm run examples   # generate example exports under outputs/
 npm run benchmark  # record structured-layout and search timings
 ```
 
-Release files are created under `outputs/releases/`; no GitHub publication occurs. See [release instructions](docs/RELEASING.md), [release notes](release/v0.1.0.md) and [CHANGELOG.md](CHANGELOG.md). This image-free source bundle uses a shorter README than the repository's illustrated overview.
+Release files are created under `outputs/releases/`; no GitHub publication occurs. See [release instructions](docs/RELEASING.md), [release notes](release/v0.1.1.md) and [CHANGELOG.md](CHANGELOG.md). This image-free source bundle uses a shorter README than the repository's illustrated overview.
 
 ## License and bundled data
 

@@ -16,10 +16,11 @@ const fixture = JSON.parse(await readFile('data/example_reduction_recipe.json', 
 // This CLI executes TypeScript sources directly, so never borrow a possibly stale browser stamp.
 const { filesUnder } = await import('./distribution-policy.mjs');
 const { readRegular, sha256 } = await import('./release-manifest.mjs');
-const cliPaths = [...(await filesUnder('src')).map(name => `src/${name}`), 'tools/export-example.ts', 'tools/distribution-policy.mjs', 'tools/release-manifest.mjs', 'package-lock.json'].sort();
+const cliPaths = [...(await filesUnder('src')).map(name => `src/${name}`), 'tools/export-example.ts', 'tools/distribution-policy.mjs', 'tools/release-manifest.mjs', 'package-lock.json', 'package.json'].sort();
 const cliFiles = await Promise.all(cliPaths.map(async path => { const bytes = await readRegular('.', path); return { path, bytes: bytes.length, sha256: sha256(bytes) }; }));
-const cliManifest = { format: 'clade-build-manifest' as const, version: 1 as const, appVersion: '0.1.0', files: cliFiles };
-const exportingBuild = { format: 'clade-build-info' as const, version: 1 as const, appVersion: '0.1.0', buildId: await contentDigest(cliManifest), manifest: 'build-manifest.json' as const };
+const { version: appVersion } = JSON.parse(await readFile('package.json', 'utf8'));
+const cliManifest = { format: 'clade-build-manifest' as const, version: 1 as const, appVersion, files: cliFiles };
+const exportingBuild = { format: 'clade-build-info' as const, version: 1 as const, appVersion, buildId: await contentDigest(cliManifest), manifest: 'build-manifest.json' as const };
 const recipe = { ...defaultRecipe(source), ...fixture }, rooted = orient(source, recipe.root), reduction = reduce(source, rooted, recipe, true);
 const base: Project = { format: 'phylogenetic-tree-studio', version: 1, appVersion: '0.1.0', title: 'Hug 2016 — initial arrangement', sourceText: source.text, sourceSha256: source.sha256, provenance, corrections, recipe, layout: generateLayout(rooted, reduction, DEFAULT_PRESENTATION, 'organic'), presentation: structuredClone(DEFAULT_PRESENTATION) };
 const summary = [];

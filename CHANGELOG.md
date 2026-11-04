@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased maintenance
+## 0.1.1 — 2026-11-04
 
 - Count routing candidate enumeration against the search budget and disclose exact work/evaluation exhaustion.
 - Report truncated shared-junction incidence checks as incomplete, with exact compound-v1/v2 replay and current compound-v3 validation.
@@ -26,4 +26,4 @@ Initial local authoring release of Clade Studio.
 - Work offline with the bundled Hug, Upham, dos Reis and Kew trees and an in-app authoring guide.
 - Build verified browser/source release archives with component licenses and SHA256 inventories.
 
-See [release notes](release/v0.1.0.md) for setup, release assets and known limitations. This entry describes the prepared version; GitHub publication has not yet taken place.
+See [release notes](release/v0.1.1.md) for downloads, compatibility and known limitations.

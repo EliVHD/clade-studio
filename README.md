@@ -22,7 +22,7 @@ The app runs on your computer, with no account, backend or file uploads. After i
 - **Refine the artwork:** adjust labels and shared junctions, pin geometry, preview readability improvements, or create a separate artistic copy. The Free arrangement workspace adds manual curves, silhouette borders and fitting.
 - **Keep the evidence:** save editable projects and export paired labeled/unlabeled SVGs with source mappings, references, Sources & Methods and geometry checks.
 
-**Version 0.1.0 is the first release.** Layouts and fitting can still produce drafts with overlaps or spacing issues. The app reports those findings so you can inspect and refine the result.
+**Version 0.1.1 is a maintenance prerelease.** Layouts and fitting can still produce drafts with overlaps or spacing issues. The app reports those findings so you can inspect and refine the result.
 
 ## Quick start
 
@@ -37,7 +37,7 @@ npm ci
 npm run dev
 ```
 
-If you downloaded the source ZIP, extract it and run the last two commands in the extracted directory. The repository is initially private; cloning requires access through your GitHub account.
+If you downloaded the source ZIP, extract it and run the last two commands in the extracted directory. The repository and release downloads are available at [EliVHD/clade-studio](https://github.com/EliVHD/clade-studio).
 
 Open **[http://127.0.0.1:4173](http://127.0.0.1:4173)** in your browser. The app opens with a bundled Hug et al. tree-of-life example. The server listens on your computer's loopback interface. Stop it with **Ctrl+C**.
 
@@ -45,7 +45,7 @@ Open **[http://127.0.0.1:4173](http://127.0.0.1:4173)** in your browser. The app
 
 ### From the browser release ZIP
 
-Extract `clade-studio-0.1.0-browser.zip` into a folder and serve that folder over local HTTP. For example, if Python 3 is installed:
+Extract `clade-studio-0.1.1-browser.zip` into a folder and serve that folder over local HTTP. For example, if Python 3 is installed:
 
 ```sh
 cd path/to/extracted-folder
@@ -111,7 +111,7 @@ Repository guidance for coding agents is in [AGENTS.md](AGENTS.md).
 | `npm run examples` | Generate example artwork packages under `outputs/`. |
 | `npm run benchmark` | Record structured-layout and search timings. |
 
-Release packaging is local; it does not create a GitHub repository, push commits or publish a release. See [first-release instructions](docs/RELEASING.md), [v0.1.0 release notes](release/v0.1.0.md) and the [changelog](CHANGELOG.md).
+Release packaging is local; it does not create a GitHub repository, push commits or publish a release. See [release instructions](docs/RELEASING.md), [v0.1.1 release notes](release/v0.1.1.md) and the [changelog](CHANGELOG.md).
 
 ## License and data credits
 
