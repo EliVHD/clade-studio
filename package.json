@@ -1,0 +1,25 @@
+{
+  "name": "phylogenetic-tree-studio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local phylogenetic reduction and vector editing with source provenance",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "check": "tsc --noEmit",
+    "test": "node tests/science.test.ts && node tests/editor.test.ts && node tests/design.test.ts && node tests/fitting.test.ts && node tests/distribution.test.mjs && node tests/identity.test.ts && node tests/release.test.mjs && node tests/project-v2.test.ts && node tests/structured.test.ts && node tests/readability.test.ts && node tests/artistic-copy.test.ts && node tests/metric.test.ts && node tests/classification.test.ts && node tests/unrooted.test.ts && node tests/search.test.ts && node tests/import.test.ts && node tests/datasets.test.ts && node tests/explore.test.ts",
+    "examples": "node tools/export-example.ts && node tools/export-structured-example.ts",
+    "start": "node tools/serve.mjs",
+    "dev": "npm run build && npm start",
+    "release": "npm run build && npm test && node tools/release.mjs",
+    "benchmark": "node tools/benchmark-structured.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2"
+  },
+  "license": "0BSD"
+}

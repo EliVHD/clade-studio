@@ -1,0 +1,3740 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Clade Studio V4 \u2014 structured cladograms and preserved artistic views",
+  "description": "V4 adds independently saved, source-qualified selected-taxon cladograms beside unchanged artistic views. Runtime replays projections, scientific snapshots, measured cluster scenes, compound incidence, QA and provenance. Missing/unsupported relations, corruption and stale exports are rejected.",
+  "type": "object",
+  "properties": {
+    "format": {
+      "const": "phylogenetic-tree-studio"
+    },
+    "version": {
+      "const": 4
+    },
+    "documentId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,150}$"
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 10000
+    },
+    "createdWith": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/build"
+        }
+      ]
+    },
+    "lastSavedWith": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/build"
+        }
+      ]
+    },
+    "sources": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/source"
+      },
+      "minProperties": 1,
+      "maxProperties": 1
+    },
+    "scientific": {
+      "$ref": "#/$defs/scientific"
+    },
+    "views": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/view"
+      },
+      "minProperties": 1,
+      "maxProperties": 32
+    },
+    "activeViewId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,150}$"
+    },
+    "provenance": {
+      "$ref": "#/$defs/provenance"
+    },
+    "compatibility": {
+      "$ref": "#/$defs/compatibility"
+    },
+    "ui": {
+      "type": "object",
+      "properties": {
+        "selection": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "structuredViewId": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "required": [
+        "selection",
+        "structuredViewId"
+      ],
+      "additionalProperties": false
+    },
+    "structuredViews": {
+      "type": "object",
+      "maxProperties": 16,
+      "additionalProperties": {
+        "$ref": "#/$defs/structuredView"
+      }
+    }
+  },
+  "required": [
+    "format",
+    "version",
+    "documentId",
+    "title",
+    "createdWith",
+    "lastSavedWith",
+    "sources",
+    "scientific",
+    "views",
+    "activeViewId",
+    "provenance",
+    "compatibility",
+    "ui",
+    "structuredViews"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "build": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "const": "clade-build-info"
+        },
+        "version": {
+          "const": 1
+        },
+        "appVersion": {
+          "type": "string"
+        },
+        "buildId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "manifest": {
+          "const": "build-manifest.json"
+        }
+      },
+      "required": [
+        "format",
+        "version",
+        "appVersion",
+        "buildId",
+        "manifest"
+      ],
+      "additionalProperties": false
+    },
+    "point": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "number",
+          "exclusiveMinimum": -10000,
+          "exclusiveMaximum": 10000
+        },
+        "y": {
+          "type": "number",
+          "exclusiveMinimum": -10000,
+          "exclusiveMaximum": 10000
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "additionalProperties": true
+    },
+    "traversal": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "node"
+            },
+            "sourceNodeId": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "sourceNodeId",
+            "status"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "edge"
+            },
+            "sourceEdge": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "fraction": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "exclusiveMaximum": 1
+            },
+            "status": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "sourceEdge",
+            "fraction",
+            "status"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "root": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "status": {
+              "const": "rooted"
+            },
+            "basis": {
+              "enum": [
+                "source-declared",
+                "curated",
+                "user-assumption",
+                "hypothetical"
+              ]
+            },
+            "explanation": {
+              "type": "string",
+              "minLength": 1
+            },
+            "referenceIds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "status",
+            "basis",
+            "explanation",
+            "referenceIds"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "status": {
+              "enum": [
+                "unrooted",
+                "unspecified"
+              ]
+            },
+            "explanation": {
+              "type": "string",
+              "minLength": 1
+            },
+            "referenceIds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "status",
+            "explanation",
+            "referenceIds"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "recipe": {
+      "type": "object",
+      "properties": {
+        "algorithm": {
+          "const": "maximal_frontier_v1"
+        },
+        "sourceSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "root": {
+          "$ref": "#/$defs/traversal"
+        },
+        "globalThreshold": {
+          "type": "number",
+          "minimum": 0
+        },
+        "thresholdOverrides": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sourceNodeId": {
+                "type": "string"
+              },
+              "threshold": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "sourceNodeId",
+              "threshold"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "protectOverridePaths": {
+          "const": true
+        },
+        "comparison": {
+          "const": "strict_less_than"
+        },
+        "protect": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "collapse": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "expand": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "resolvedFrontierSourceNodeIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "algorithm",
+        "sourceSha256",
+        "root",
+        "globalThreshold",
+        "thresholdOverrides",
+        "protectOverridePaths",
+        "comparison",
+        "protect",
+        "collapse",
+        "expand",
+        "resolvedFrontierSourceNodeIds"
+      ],
+      "additionalProperties": true
+    },
+    "layout": {
+      "type": "object",
+      "properties": {
+        "nodes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/point"
+          }
+        },
+        "routes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "segments": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "c1": {
+                      "$ref": "#/$defs/point"
+                    },
+                    "c2": {
+                      "$ref": "#/$defs/point"
+                    },
+                    "end": {
+                      "$ref": "#/$defs/point"
+                    }
+                  },
+                  "required": [
+                    "c1",
+                    "c2",
+                    "end"
+                  ],
+                  "additionalProperties": true
+                },
+                "minItems": 1,
+                "maxItems": 24
+              }
+            },
+            "required": [
+              "segments"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "pinnedNodes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "pinnedEdges": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "childOrder": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          }
+        },
+        "mode": {
+          "enum": [
+            "organic",
+            "scientific"
+          ]
+        },
+        "lineStyle": {
+          "enum": [
+            "curved",
+            "straight"
+          ]
+        }
+      },
+      "required": [
+        "nodes",
+        "routes",
+        "pinnedNodes",
+        "pinnedEdges",
+        "childOrder",
+        "mode"
+      ],
+      "additionalProperties": true
+    },
+    "appearance": {
+      "type": "object",
+      "properties": {
+        "widthMm": {
+          "type": "number",
+          "minimum": 20,
+          "maximum": 2000
+        },
+        "heightMm": {
+          "type": "number",
+          "minimum": 20,
+          "maximum": 2000
+        },
+        "strokeMm": {
+          "type": "number",
+          "minimum": 0.01,
+          "maximum": 10
+        },
+        "taper": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "clearanceMm": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 20
+        },
+        "toleranceMm": {
+          "type": "number",
+          "minimum": 0.001,
+          "maximum": 0.5
+        },
+        "junctionMm": {
+          "type": "number",
+          "minimum": 0.05,
+          "maximum": 10
+        },
+        "sourceUnitMm": {
+          "type": "number",
+          "minimum": 0.001,
+          "maximum": 10000
+        },
+        "labels": {
+          "type": "boolean"
+        },
+        "labelOffsets": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/point"
+          }
+        }
+      },
+      "required": [
+        "widthMm",
+        "heightMm",
+        "strokeMm",
+        "taper",
+        "clearanceMm",
+        "toleranceMm",
+        "junctionMm",
+        "sourceUnitMm",
+        "labels",
+        "labelOffsets"
+      ],
+      "additionalProperties": true
+    },
+    "direction": {
+      "type": "object",
+      "properties": {
+        "angleDeg": {
+          "type": "number"
+        },
+        "strength": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "angleDeg",
+        "strength"
+      ],
+      "additionalProperties": true
+    },
+    "border": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "points": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/point"
+          },
+          "minItems": 2,
+          "maxItems": 512
+        },
+        "closed": {
+          "type": "boolean"
+        },
+        "placement": {
+          "enum": [
+            "nearest",
+            "spread"
+          ]
+        },
+        "insetMm": {
+          "type": "number"
+        },
+        "variationMm": {
+          "type": "number"
+        },
+        "seed": {
+          "type": "integer"
+        },
+        "direction": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/direction"
+            }
+          ]
+        },
+        "assignments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sourceNodeId": {
+                "type": "string"
+              },
+              "fraction": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "normalSign": {
+                "enum": [
+                  -1,
+                  1
+                ]
+              }
+            },
+            "required": [
+              "sourceNodeId",
+              "fraction",
+              "normalSign"
+            ],
+            "additionalProperties": true
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "points",
+        "closed",
+        "placement",
+        "insetMm",
+        "variationMm",
+        "seed",
+        "assignments"
+      ],
+      "additionalProperties": true
+    },
+    "image": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "dataUrl": {
+          "type": "string",
+          "pattern": "^data:image/(png|jpeg|webp);base64,"
+        },
+        "pixelWidth": {
+          "type": "number"
+        },
+        "pixelHeight": {
+          "type": "number"
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "widthMm": {
+          "type": "number"
+        },
+        "heightMm": {
+          "type": "number"
+        },
+        "rotationDeg": {
+          "type": "number"
+        },
+        "opacity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "layer": {
+          "enum": [
+            "behind",
+            "above"
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "dataUrl",
+        "pixelWidth",
+        "pixelHeight",
+        "x",
+        "y",
+        "widthMm",
+        "heightMm",
+        "rotationDeg",
+        "opacity",
+        "visible",
+        "layer"
+      ],
+      "additionalProperties": true
+    },
+    "fit": {
+      "type": "object",
+      "properties": {
+        "algorithm": {
+          "const": "junction_fit_v1"
+        },
+        "borderScope": {
+          "enum": [
+            "all",
+            "active"
+          ]
+        },
+        "strength": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "junctionDepth": {
+          "type": "number"
+        },
+        "preserveFlow": {
+          "type": "number"
+        },
+        "junctionSpacingMm": {
+          "type": "number"
+        },
+        "smoothing": {
+          "type": "number"
+        },
+        "direction": {
+          "$ref": "#/$defs/direction"
+        },
+        "routing": {
+          "type": "number"
+        },
+        "forkSpread": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "algorithm",
+        "borderScope",
+        "strength",
+        "junctionDepth",
+        "preserveFlow",
+        "junctionSpacingMm",
+        "smoothing"
+      ],
+      "additionalProperties": true
+    },
+    "design": {
+      "type": "object",
+      "properties": {
+        "borders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/border"
+          }
+        },
+        "showBorders": {
+          "type": "boolean"
+        },
+        "activeBorderId": {
+          "type": "string"
+        },
+        "referenceImage": {
+          "$ref": "#/$defs/image"
+        },
+        "fitSettings": {
+          "$ref": "#/$defs/fit"
+        }
+      },
+      "required": [
+        "borders",
+        "showBorders"
+      ],
+      "additionalProperties": true
+    },
+    "view": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,150}$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "intent": {
+          "enum": [
+            "artistic",
+            "legacy-inspection"
+          ]
+        },
+        "adapter": {
+          "const": "legacy-artistic-v1"
+        },
+        "layout": {
+          "$ref": "#/$defs/layout"
+        },
+        "appearance": {
+          "$ref": "#/$defs/appearance"
+        },
+        "design": {
+          "$ref": "#/$defs/design"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "intent",
+        "adapter",
+        "layout",
+        "appearance"
+      ],
+      "additionalProperties": false
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "role": {
+          "const": "topology"
+        },
+        "mediaType": {
+          "const": "text/x-newick"
+        },
+        "content": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "hashBasis": {
+          "const": "legacy-utf8-text"
+        },
+        "referenceIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "metadataStatus": {
+          "enum": [
+            "curated",
+            "incomplete"
+          ]
+        },
+        "attribution": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "role",
+        "mediaType",
+        "content",
+        "sha256",
+        "hashBasis",
+        "referenceIds",
+        "metadataStatus",
+        "attribution"
+      ],
+      "additionalProperties": false
+    },
+    "reference": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "article",
+            "application-method",
+            "source"
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "authors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "year": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer"
+            }
+          ]
+        },
+        "doi": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^10\\.\\d{4,9}/[^\\s<>\"{}]+$"
+            }
+          ]
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^https?://"
+            }
+          ]
+        },
+        "license": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "verification": {
+          "enum": [
+            "verified-source",
+            "application-defined",
+            "unverified"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "title",
+        "authors",
+        "year",
+        "doi",
+        "url",
+        "license",
+        "verification"
+      ],
+      "additionalProperties": true
+    },
+    "referenceUse": {
+      "type": "object",
+      "properties": {
+        "referenceId": {
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "input-tree",
+            "algorithm",
+            "implementation",
+            "background"
+          ]
+        },
+        "relationship": {
+          "enum": [
+            "uses-data",
+            "implements",
+            "adapts",
+            "inspired-by",
+            "background"
+          ]
+        }
+      },
+      "required": [
+        "referenceId",
+        "role",
+        "relationship"
+      ],
+      "additionalProperties": true
+    },
+    "method": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "category": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "implemented",
+            "planned"
+          ]
+        },
+        "specification": {
+          "type": "string"
+        },
+        "specificationSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "parameterSchema": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "object"
+            },
+            "additionalProperties": {
+              "const": true
+            }
+          },
+          "required": [
+            "type",
+            "additionalProperties"
+          ],
+          "additionalProperties": false
+        },
+        "defaults": {
+          "type": "object"
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "referenceUses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/referenceUse"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "version",
+        "category",
+        "status",
+        "specification",
+        "specificationSha256",
+        "parameterSchema",
+        "defaults",
+        "limitations",
+        "referenceUses"
+      ],
+      "additionalProperties": true
+    },
+    "head": {
+      "type": "object",
+      "properties": {
+        "revision": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "operationId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "revision",
+        "operationId"
+      ],
+      "additionalProperties": true
+    },
+    "operation": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^operation-[0-9a-f]{64}$"
+        },
+        "kind": {
+          "enum": [
+            "migration",
+            "scientific",
+            "layout",
+            "manual",
+            "appearance",
+            "annotation",
+            "context"
+          ]
+        },
+        "methods": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "buildId": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "key",
+              "buildId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "scope": {
+          "type": "object",
+          "properties": {
+            "sourceId": {
+              "type": "string"
+            },
+            "viewId": {
+              "type": "string"
+            },
+            "components": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "sourceNodeIds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "sourceId",
+            "viewId",
+            "components",
+            "sourceNodeIds"
+          ],
+          "additionalProperties": false
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/head"
+          }
+        },
+        "outputs": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "parameters": {
+          "type": "object"
+        },
+        "referenceUses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/referenceUse"
+          }
+        },
+        "result": {
+          "type": "object"
+        },
+        "recordedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "methods",
+        "scope",
+        "inputs",
+        "outputs",
+        "parameters",
+        "referenceUses",
+        "result",
+        "recordedAt",
+        "notes"
+      ],
+      "additionalProperties": true
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "references": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/reference"
+          }
+        },
+        "methods": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/method"
+          }
+        },
+        "operations": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/operation"
+          },
+          "maxProperties": 20000
+        },
+        "heads": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/head"
+          }
+        },
+        "replayCoverage": {
+          "const": "source-and-final-geometry"
+        }
+      },
+      "required": [
+        "references",
+        "methods",
+        "operations",
+        "heads",
+        "replayCoverage"
+      ],
+      "additionalProperties": true
+    },
+    "correction": {
+      "type": "object",
+      "properties": {
+        "source_node_id": {
+          "type": "string"
+        },
+        "raw_label": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "display_taxonomy": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "evidence_url": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^https?://"
+            }
+          ]
+        },
+        "review_date": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_node_id",
+        "raw_label",
+        "status",
+        "display_taxonomy",
+        "evidence_url",
+        "review_date"
+      ],
+      "additionalProperties": true
+    },
+    "scientific": {
+      "type": "object",
+      "properties": {
+        "primarySourceId": {
+          "type": "string"
+        },
+        "root": {
+          "$ref": "#/$defs/root"
+        },
+        "traversal": {
+          "$ref": "#/$defs/traversal"
+        },
+        "selection": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "all"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        "reduction": {
+          "$ref": "#/$defs/recipe"
+        },
+        "corrections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/correction"
+          }
+        },
+        "edgeMeasure": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "meaning": {
+                  "const": "substitutions-per-site"
+                },
+                "unit": {
+                  "const": "substitutions/site"
+                },
+                "evidenceReferenceId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "meaning",
+                "unit",
+                "evidenceReferenceId"
+              ],
+              "additionalProperties": true
+            }
+          ]
+        },
+        "basis": {
+          "$ref": "#/$defs/scientificBasis"
+        }
+      },
+      "required": [
+        "primarySourceId",
+        "root",
+        "traversal",
+        "selection",
+        "reduction",
+        "corrections",
+        "edgeMeasure",
+        "basis"
+      ],
+      "additionalProperties": false
+    },
+    "compatibility": {
+      "type": "object",
+      "properties": {
+        "originalVersion": {
+          "enum": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "migrationVersion": {
+          "const": "structured-views-v4.1"
+        },
+        "historyStatus": {
+          "enum": [
+            "incomplete",
+            "recorded-from-creation"
+          ]
+        },
+        "notices": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "legacyProvenance": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "originalVersion",
+        "migrationVersion",
+        "historyStatus",
+        "notices",
+        "legacyProvenance"
+      ],
+      "additionalProperties": false
+    },
+    "scientificBasis": {
+      "type": "object",
+      "properties": {
+        "question": {
+          "type": "string",
+          "maxLength": 10000
+        },
+        "edgeMeaning": {
+          "type": "string",
+          "maxLength": 10000
+        },
+        "evidenceBasis": {
+          "type": "string",
+          "maxLength": 10000
+        },
+        "limitations": {
+          "type": "string",
+          "maxLength": 10000
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,150}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "relationshipKind": {
+          "enum": [
+            "phylogeny",
+            "classification",
+            "similarity",
+            "ecological-interaction",
+            "unspecified"
+          ]
+        },
+        "entityKind": {
+          "enum": [
+            "taxon-concepts",
+            "specimens",
+            "populations",
+            "genes-sequences",
+            "unspecified"
+          ]
+        },
+        "epistemicStatus": {
+          "enum": [
+            "published-hypothesis",
+            "classification-release",
+            "historical-model",
+            "teaching-example",
+            "unspecified"
+          ]
+        },
+        "provider": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            }
+          ]
+        },
+        "release": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            }
+          ]
+        },
+        "retrievedAt": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            }
+          ]
+        },
+        "sourceIds": {
+          "type": "array",
+          "maxItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,150}$"
+          },
+          "minItems": 1
+        },
+        "referenceIds": {
+          "type": "array",
+          "maxItems": 100,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,150}$"
+          }
+        },
+        "rightsRecordIds": {
+          "type": "array",
+          "maxItems": 100,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,150}$"
+          }
+        }
+      },
+      "required": [
+        "question",
+        "edgeMeaning",
+        "evidenceBasis",
+        "limitations",
+        "id",
+        "name",
+        "relationshipKind",
+        "entityKind",
+        "epistemicStatus",
+        "provider",
+        "release",
+        "retrievedAt",
+        "sourceIds",
+        "referenceIds",
+        "rightsRecordIds"
+      ],
+      "additionalProperties": false
+    },
+    "projectionSpec": {
+      "type": "object",
+      "properties": {
+        "selection": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "all"
+                }
+              },
+              "required": [
+                "kind"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "explicit-tips"
+                },
+                "tipIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "uniqueItems": true,
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "kind",
+                "tipIds"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "collapse": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "expand": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "reveal": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "childOrder": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          }
+        }
+      },
+      "required": [
+        "selection",
+        "collapse",
+        "expand",
+        "reveal",
+        "childOrder"
+      ],
+      "additionalProperties": false
+    },
+    "displayNode": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "parent": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "selectedMembers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "originalMembers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "omittedMembers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "aggregate": {
+          "type": "boolean"
+        },
+        "label": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "parent",
+        "children",
+        "selectedMembers",
+        "originalMembers",
+        "omittedMembers",
+        "aggregate",
+        "label"
+      ],
+      "additionalProperties": false
+    },
+    "displayEdge": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "parent": {
+          "type": "string"
+        },
+        "child": {
+          "type": "string"
+        },
+        "sourcePath": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "sourceEdgeIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "length": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "annotations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sourceNodeId": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "position": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "sourceNodeId",
+              "text",
+              "position"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "id",
+        "parent",
+        "child",
+        "sourcePath",
+        "sourceEdgeIds",
+        "length",
+        "annotations"
+      ],
+      "additionalProperties": false
+    },
+    "displayGraph": {
+      "type": "object",
+      "properties": {
+        "rootId": {
+          "type": "string"
+        },
+        "nodes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/displayNode"
+          }
+        },
+        "edges": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/displayEdge"
+          }
+        },
+        "order": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "endpoints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "representedTips": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "omittedTips": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "sourceSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "rootId",
+        "nodes",
+        "edges",
+        "order",
+        "endpoints",
+        "representedTips",
+        "omittedTips",
+        "sourceSha256"
+      ],
+      "additionalProperties": false
+    },
+    "structuredSettings": {
+      "type": "object",
+      "properties": {
+        "widthMm": {
+          "type": "number"
+        },
+        "heightMm": {
+          "type": "number"
+        },
+        "marginMm": {
+          "type": "number"
+        },
+        "strokeMm": {
+          "type": "number"
+        },
+        "junctionMm": {
+          "type": "number"
+        },
+        "clearanceMm": {
+          "type": "number"
+        },
+        "toleranceMm": {
+          "type": "number"
+        },
+        "fontSizePt": {
+          "type": "number"
+        },
+        "labelGapMm": {
+          "type": "number"
+        },
+        "terminalGapMm": {
+          "type": "number"
+        },
+        "innerRadiusMm": {
+          "type": "number"
+        },
+        "outerRadiusMm": {
+          "type": "number"
+        },
+        "startAngleDeg": {
+          "type": "number"
+        },
+        "sweepDeg": {
+          "type": "number"
+        },
+        "orientationDeg": {
+          "type": "number"
+        },
+        "kind": {
+          "enum": [
+            "rectangular",
+            "circular",
+            "fan"
+          ]
+        },
+        "fontFamily": {
+          "type": "string"
+        },
+        "labelPlacement": {
+          "enum": [
+            "radial",
+            "horizontal",
+            "tangential"
+          ]
+        },
+        "curves": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "widthMm",
+        "heightMm",
+        "marginMm",
+        "strokeMm",
+        "junctionMm",
+        "clearanceMm",
+        "toleranceMm",
+        "fontSizePt",
+        "labelGapMm",
+        "terminalGapMm",
+        "innerRadiusMm",
+        "outerRadiusMm",
+        "startAngleDeg",
+        "sweepDeg",
+        "orientationDeg",
+        "kind",
+        "fontFamily",
+        "labelPlacement",
+        "curves"
+      ],
+      "additionalProperties": false
+    },
+    "textMetric": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "widthMm": {
+          "type": "number"
+        },
+        "ascentMm": {
+          "type": "number"
+        },
+        "descentMm": {
+          "type": "number"
+        },
+        "advanceMm": {
+          "type": "number"
+        },
+        "leftMm": {
+          "type": "number"
+        },
+        "rightMm": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "text",
+        "widthMm",
+        "ascentMm",
+        "descentMm"
+      ],
+      "additionalProperties": false
+    },
+    "textMeasurements": {
+      "type": "object",
+      "properties": {
+        "fontFamily": {
+          "type": "string"
+        },
+        "fontSizePt": {
+          "type": "number"
+        },
+        "fontStatus": {
+          "enum": [
+            "available",
+            "substituted",
+            "estimated"
+          ]
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/textMetric"
+          }
+        },
+        "scaleBar": {
+          "$ref": "#/$defs/textMetric"
+        }
+      },
+      "required": [
+        "fontFamily",
+        "fontSizePt",
+        "fontStatus",
+        "metrics"
+      ],
+      "additionalProperties": false
+    },
+    "primitive": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "point"
+            },
+            "point": {
+              "$ref": "#/$defs/point"
+            }
+          },
+          "required": [
+            "kind",
+            "point"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "polyline"
+            },
+            "points": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/$defs/point"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "points"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "arc"
+            },
+            "center": {
+              "$ref": "#/$defs/point"
+            },
+            "radius": {
+              "type": "number"
+            },
+            "startDeg": {
+              "type": "number"
+            },
+            "endDeg": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "kind",
+            "center",
+            "radius",
+            "startDeg",
+            "endDeg"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "junctionGlyph": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "nodeId": {
+          "type": "string"
+        },
+        "anchor": {
+          "$ref": "#/$defs/point"
+        },
+        "geometry": {
+          "$ref": "#/$defs/primitive"
+        },
+        "span": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number"
+          }
+        },
+        "depth": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "nodeId",
+        "anchor",
+        "geometry",
+        "span",
+        "depth"
+      ],
+      "additionalProperties": false
+    },
+    "port": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "nodeId": {
+          "type": "string"
+        },
+        "edgeId": {
+          "type": "string"
+        },
+        "end": {
+          "enum": [
+            "parent",
+            "child"
+          ]
+        },
+        "point": {
+          "$ref": "#/$defs/point"
+        }
+      },
+      "required": [
+        "id",
+        "nodeId",
+        "edgeId",
+        "end",
+        "point"
+      ],
+      "additionalProperties": false
+    },
+    "edgeStem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "edgeId": {
+          "type": "string"
+        },
+        "parentPortId": {
+          "type": "string"
+        },
+        "childPortId": {
+          "type": "string"
+        },
+        "geometry": {
+          "$ref": "#/$defs/primitive"
+        }
+      },
+      "required": [
+        "id",
+        "edgeId",
+        "parentPortId",
+        "childPortId",
+        "geometry"
+      ],
+      "additionalProperties": false
+    },
+    "sceneLabel": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "nodeId": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "position": {
+          "$ref": "#/$defs/point"
+        },
+        "rotationDeg": {
+          "type": "number"
+        },
+        "anchor": {
+          "enum": [
+            "start",
+            "end",
+            "middle"
+          ]
+        },
+        "corners": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/point"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "nodeId",
+        "text",
+        "position",
+        "rotationDeg",
+        "anchor",
+        "corners"
+      ],
+      "additionalProperties": false
+    },
+    "sceneIssue": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "incidence",
+            "contact",
+            "clearance",
+            "labels",
+            "bounds",
+            "legibility",
+            "font"
+          ]
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "detail": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "ids",
+        "detail"
+      ],
+      "additionalProperties": false
+    },
+    "sceneQA": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "checked",
+            "draft"
+          ]
+        },
+        "coveragePassed": {
+          "type": "boolean"
+        },
+        "incidencePassed": {
+          "type": "boolean"
+        },
+        "crossingPassed": {
+          "type": "boolean"
+        },
+        "clearancePassed": {
+          "type": "boolean"
+        },
+        "labelCollisions": {
+          "type": "number"
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sceneIssue"
+          }
+        },
+        "omittedIssueCount": {
+          "type": "number"
+        },
+        "checkedPairs": {
+          "type": "number"
+        },
+        "limited": {
+          "type": "boolean"
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "status",
+        "coveragePassed",
+        "incidencePassed",
+        "crossingPassed",
+        "clearancePassed",
+        "labelCollisions",
+        "issues",
+        "omittedIssueCount",
+        "checkedPairs",
+        "limited",
+        "limitations"
+      ],
+      "additionalProperties": false
+    },
+    "renderScene": {
+      "type": "object",
+      "properties": {
+        "units": {
+          "const": "mm"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "graphRevision": {
+          "type": "string"
+        },
+        "settings": {
+          "$ref": "#/$defs/structuredSettings"
+        },
+        "measurements": {
+          "$ref": "#/$defs/textMeasurements"
+        },
+        "junctionGlyphs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/junctionGlyph"
+          }
+        },
+        "edgeStems": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/edgeStem"
+          }
+        },
+        "ports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/port"
+          }
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sceneLabel"
+          }
+        },
+        "bounds": {
+          "type": "object",
+          "properties": {
+            "minX": {
+              "type": "number"
+            },
+            "minY": {
+              "type": "number"
+            },
+            "maxX": {
+              "type": "number"
+            },
+            "maxY": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "minX",
+            "minY",
+            "maxX",
+            "maxY"
+          ],
+          "additionalProperties": false
+        },
+        "slotPasses": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        },
+        "nodeOffsets": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "depth": {
+                "type": "number"
+              },
+              "shift": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "depth",
+              "shift"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "labelOffsets": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/point"
+          }
+        },
+        "metric": {
+          "$ref": "#/$defs/metricScene"
+        },
+        "classification": {
+          "$ref": "#/$defs/classificationScene"
+        },
+        "unrooted": {
+          "$ref": "#/$defs/unrootedScene"
+        }
+      },
+      "required": [
+        "units",
+        "revision",
+        "graphRevision",
+        "settings",
+        "measurements",
+        "junctionGlyphs",
+        "edgeStems",
+        "ports",
+        "labels",
+        "bounds",
+        "slotPasses",
+        "nodeOffsets"
+      ],
+      "additionalProperties": false
+    },
+    "structuredView": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/clusterView"
+        },
+        {
+          "$ref": "#/$defs/artisticView"
+        },
+        {
+          "$ref": "#/$defs/metricView"
+        },
+        {
+          "$ref": "#/$defs/classificationView"
+        },
+        {
+          "$ref": "#/$defs/unrootedView"
+        }
+      ]
+    },
+    "clusterView": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "intent": {
+          "const": "cladogram"
+        },
+        "adapter": {
+          "const": "clade-cluster-v1"
+        },
+        "inputRevision": {
+          "type": "string"
+        },
+        "input": {
+          "type": "object",
+          "properties": {
+            "basis": {
+              "$ref": "#/$defs/scientificBasis"
+            },
+            "root": {
+              "$ref": "#/$defs/root"
+            },
+            "traversal": {
+              "$ref": "#/$defs/traversal"
+            },
+            "corrections": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/correction"
+              }
+            }
+          },
+          "required": [
+            "basis",
+            "root",
+            "traversal",
+            "corrections"
+          ],
+          "additionalProperties": false
+        },
+        "projection": {
+          "$ref": "#/$defs/projectionSpec"
+        },
+        "graph": {
+          "$ref": "#/$defs/displayGraph"
+        },
+        "scene": {
+          "$ref": "#/$defs/renderScene"
+        },
+        "qa": {
+          "$ref": "#/$defs/sceneQA"
+        },
+        "pinnedNodes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "pinnedEdges": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "highlights": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "intent",
+        "adapter",
+        "inputRevision",
+        "input",
+        "projection",
+        "graph",
+        "scene",
+        "qa",
+        "pinnedNodes",
+        "pinnedEdges",
+        "highlights"
+      ],
+      "additionalProperties": false
+    },
+    "artisticView": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "intent": {
+          "const": "artistic"
+        },
+        "adapter": {
+          "const": "compound-artistic-v1"
+        },
+        "inputRevision": {
+          "type": "string"
+        },
+        "input": {
+          "type": "object",
+          "properties": {
+            "basis": {
+              "$ref": "#/$defs/scientificBasis"
+            },
+            "root": {
+              "$ref": "#/$defs/root"
+            },
+            "traversal": {
+              "$ref": "#/$defs/traversal"
+            },
+            "corrections": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/correction"
+              }
+            }
+          },
+          "required": [
+            "basis",
+            "root",
+            "traversal",
+            "corrections"
+          ],
+          "additionalProperties": false
+        },
+        "projection": {
+          "$ref": "#/$defs/projectionSpec"
+        },
+        "graph": {
+          "$ref": "#/$defs/displayGraph"
+        },
+        "scene": {
+          "$ref": "#/$defs/renderScene"
+        },
+        "qa": {
+          "$ref": "#/$defs/sceneQA"
+        },
+        "pinnedNodes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "pinnedEdges": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "highlights": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "artistic": {
+          "type": "object",
+          "properties": {
+            "viewId": {
+              "type": "string"
+            },
+            "sceneRevision": {
+              "type": "string"
+            },
+            "baseScene": {
+              "$ref": "#/$defs/renderScene"
+            },
+            "edits": {
+              "type": "array",
+              "maxItems": 1000,
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "move-junction"
+                      },
+                      "nodeIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1,
+                        "uniqueItems": true
+                      },
+                      "delta": {
+                        "$ref": "#/$defs/point"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "nodeIds",
+                      "delta"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "move-label"
+                      },
+                      "nodeId": {
+                        "type": "string"
+                      },
+                      "delta": {
+                        "$ref": "#/$defs/point"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "nodeId",
+                      "delta"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "stem-waypoints"
+                      },
+                      "edgeId": {
+                        "type": "string"
+                      },
+                      "points": {
+                        "type": "array",
+                        "maxItems": 24,
+                        "items": {
+                          "$ref": "#/$defs/point"
+                        }
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "edgeId",
+                      "points"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "appearance"
+                      },
+                      "strokeMm": {
+                        "type": "number",
+                        "minimum": 0.01,
+                        "maximum": 10
+                      },
+                      "curves": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "strokeMm",
+                      "curves"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "measure-labels"
+                      },
+                      "measurements": {
+                        "$ref": "#/$defs/textMeasurements"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "measurements"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            }
+          },
+          "required": [
+            "viewId",
+            "sceneRevision",
+            "baseScene",
+            "edits"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "intent",
+        "adapter",
+        "inputRevision",
+        "input",
+        "projection",
+        "graph",
+        "scene",
+        "qa",
+        "pinnedNodes",
+        "pinnedEdges",
+        "highlights",
+        "artistic"
+      ],
+      "additionalProperties": false
+    },
+    "metricMeasure": {
+      "type": "object",
+      "properties": {
+        "meaning": {
+          "enum": [
+            "substitutions-per-site",
+            "expected-changes",
+            "other-distance"
+          ]
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "evidence": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 5000
+        },
+        "referenceIds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 100
+        },
+        "sourceSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "declaration": {
+          "enum": [
+            "curated",
+            "user-supplied"
+          ]
+        }
+      },
+      "required": [
+        "meaning",
+        "unit",
+        "evidence",
+        "referenceIds",
+        "sourceSha256",
+        "declaration"
+      ],
+      "additionalProperties": false
+    },
+    "metricSpec": {
+      "type": "object",
+      "properties": {
+        "measure": {
+          "$ref": "#/$defs/metricMeasure"
+        },
+        "mmPerUnit": {
+          "type": "number",
+          "minimum": 1e-06,
+          "maximum": 1000000.0
+        },
+        "scaleBarValue": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1000000000000.0
+        }
+      },
+      "required": [
+        "measure",
+        "mmPerUnit",
+        "scaleBarValue"
+      ],
+      "additionalProperties": false
+    },
+    "metricScene": {
+      "type": "object",
+      "properties": {
+        "spec": {
+          "$ref": "#/$defs/metricSpec"
+        },
+        "distances": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "scaleBar": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "from": {
+              "$ref": "#/$defs/point"
+            },
+            "to": {
+              "$ref": "#/$defs/point"
+            },
+            "label": {
+              "type": "string"
+            },
+            "position": {
+              "$ref": "#/$defs/point"
+            },
+            "corners": {
+              "type": "array",
+              "minItems": 4,
+              "maxItems": 4,
+              "items": {
+                "$ref": "#/$defs/point"
+              }
+            }
+          },
+          "required": [
+            "value",
+            "from",
+            "to",
+            "label",
+            "position",
+            "corners"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "spec",
+        "distances",
+        "scaleBar"
+      ],
+      "additionalProperties": false
+    },
+    "metricView": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "intent": {
+          "const": "phylogram"
+        },
+        "adapter": {
+          "const": "metric-distance-v1"
+        },
+        "inputRevision": {
+          "type": "string"
+        },
+        "input": {
+          "type": "object",
+          "properties": {
+            "basis": {
+              "$ref": "#/$defs/scientificBasis"
+            },
+            "root": {
+              "$ref": "#/$defs/root"
+            },
+            "traversal": {
+              "$ref": "#/$defs/traversal"
+            },
+            "corrections": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/correction"
+              }
+            }
+          },
+          "required": [
+            "basis",
+            "root",
+            "traversal",
+            "corrections"
+          ],
+          "additionalProperties": false
+        },
+        "projection": {
+          "$ref": "#/$defs/projectionSpec"
+        },
+        "graph": {
+          "$ref": "#/$defs/displayGraph"
+        },
+        "scene": {
+          "$ref": "#/$defs/metricRenderScene"
+        },
+        "qa": {
+          "$ref": "#/$defs/sceneQA"
+        },
+        "pinnedNodes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "pinnedEdges": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "highlights": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "intent",
+        "adapter",
+        "inputRevision",
+        "input",
+        "projection",
+        "graph",
+        "scene",
+        "qa",
+        "pinnedNodes",
+        "pinnedEdges",
+        "highlights"
+      ],
+      "additionalProperties": false
+    },
+    "metricRenderScene": {
+      "type": "object",
+      "properties": {
+        "units": {
+          "const": "mm"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "graphRevision": {
+          "type": "string"
+        },
+        "settings": {
+          "$ref": "#/$defs/structuredSettings"
+        },
+        "measurements": {
+          "$ref": "#/$defs/textMeasurements"
+        },
+        "junctionGlyphs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/junctionGlyph"
+          }
+        },
+        "edgeStems": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/edgeStem"
+          }
+        },
+        "ports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/port"
+          }
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sceneLabel"
+          }
+        },
+        "bounds": {
+          "type": "object",
+          "properties": {
+            "minX": {
+              "type": "number"
+            },
+            "minY": {
+              "type": "number"
+            },
+            "maxX": {
+              "type": "number"
+            },
+            "maxY": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "minX",
+            "minY",
+            "maxX",
+            "maxY"
+          ],
+          "additionalProperties": false
+        },
+        "slotPasses": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        },
+        "nodeOffsets": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "depth": {
+                "type": "number"
+              },
+              "shift": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "depth",
+              "shift"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "labelOffsets": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/point"
+          }
+        },
+        "metric": {
+          "$ref": "#/$defs/metricScene"
+        }
+      },
+      "required": [
+        "units",
+        "revision",
+        "graphRevision",
+        "settings",
+        "measurements",
+        "junctionGlyphs",
+        "edgeStems",
+        "ports",
+        "labels",
+        "bounds",
+        "slotPasses",
+        "nodeOffsets",
+        "metric"
+      ],
+      "additionalProperties": false
+    },
+    "classificationSpec": {
+      "type": "object",
+      "properties": {
+        "sourceSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "authority": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "release": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "evidence": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 5000
+        },
+        "referenceIds": {
+          "type": "array",
+          "maxItems": 100,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "rankOrder": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "ranks": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "unrankedPolicy": {
+          "const": "parent-link-interpolation-v1"
+        }
+      },
+      "required": [
+        "sourceSha256",
+        "authority",
+        "release",
+        "evidence",
+        "referenceIds",
+        "rankOrder",
+        "ranks",
+        "unrankedPolicy"
+      ],
+      "additionalProperties": false
+    },
+    "classificationScene": {
+      "type": "object",
+      "properties": {
+        "spec": {
+          "$ref": "#/$defs/classificationSpec"
+        },
+        "topNodeId": {
+          "type": "string"
+        },
+        "levels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMaximum": 1
+          }
+        },
+        "rankLevels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMaximum": 1
+          }
+        }
+      },
+      "required": [
+        "spec",
+        "topNodeId",
+        "levels",
+        "rankLevels"
+      ],
+      "additionalProperties": false
+    },
+    "classificationRenderScene": {
+      "type": "object",
+      "properties": {
+        "units": {
+          "const": "mm"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "graphRevision": {
+          "type": "string"
+        },
+        "settings": {
+          "$ref": "#/$defs/structuredSettings"
+        },
+        "measurements": {
+          "$ref": "#/$defs/textMeasurements"
+        },
+        "junctionGlyphs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/junctionGlyph"
+          }
+        },
+        "edgeStems": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/edgeStem"
+          }
+        },
+        "ports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/port"
+          }
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sceneLabel"
+          }
+        },
+        "bounds": {
+          "type": "object",
+          "properties": {
+            "minX": {
+              "type": "number"
+            },
+            "minY": {
+              "type": "number"
+            },
+            "maxX": {
+              "type": "number"
+            },
+            "maxY": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "minX",
+            "minY",
+            "maxX",
+            "maxY"
+          ],
+          "additionalProperties": false
+        },
+        "slotPasses": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        },
+        "nodeOffsets": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "depth": {
+                "type": "number"
+              },
+              "shift": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "depth",
+              "shift"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "labelOffsets": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/point"
+          }
+        },
+        "metric": {
+          "$ref": "#/$defs/metricScene"
+        },
+        "classification": {
+          "$ref": "#/$defs/classificationScene"
+        }
+      },
+      "required": [
+        "units",
+        "revision",
+        "graphRevision",
+        "settings",
+        "measurements",
+        "junctionGlyphs",
+        "edgeStems",
+        "ports",
+        "labels",
+        "bounds",
+        "slotPasses",
+        "nodeOffsets",
+        "classification"
+      ],
+      "additionalProperties": false
+    },
+    "classificationView": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "intent": {
+          "const": "taxonomy"
+        },
+        "adapter": {
+          "const": "classification-rank-v1"
+        },
+        "inputRevision": {
+          "type": "string"
+        },
+        "input": {
+          "type": "object",
+          "properties": {
+            "basis": {
+              "$ref": "#/$defs/scientificBasis"
+            },
+            "root": {
+              "$ref": "#/$defs/root"
+            },
+            "traversal": {
+              "$ref": "#/$defs/traversal"
+            },
+            "corrections": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/correction"
+              }
+            }
+          },
+          "required": [
+            "basis",
+            "root",
+            "traversal",
+            "corrections"
+          ],
+          "additionalProperties": false
+        },
+        "projection": {
+          "$ref": "#/$defs/projectionSpec"
+        },
+        "graph": {
+          "$ref": "#/$defs/displayGraph"
+        },
+        "scene": {
+          "$ref": "#/$defs/classificationRenderScene"
+        },
+        "qa": {
+          "$ref": "#/$defs/sceneQA"
+        },
+        "pinnedNodes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "pinnedEdges": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "highlights": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "intent",
+        "adapter",
+        "inputRevision",
+        "input",
+        "projection",
+        "graph",
+        "scene",
+        "qa",
+        "pinnedNodes",
+        "pinnedEdges",
+        "highlights"
+      ],
+      "additionalProperties": false
+    },
+    "unrootedSpec": {
+      "type": "object",
+      "properties": {
+        "sourceSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "algorithm": {
+          "enum": [
+            "equal-angle",
+            "daylight"
+          ]
+        },
+        "originNodeId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "edgeLengthMm": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 200
+        },
+        "daylightPasses": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 12
+        },
+        "daylightStrength": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "sourceSha256",
+        "algorithm",
+        "originNodeId",
+        "edgeLengthMm",
+        "daylightPasses",
+        "daylightStrength"
+      ],
+      "additionalProperties": false
+    },
+    "unrootedScene": {
+      "type": "object",
+      "properties": {
+        "spec": {
+          "$ref": "#/$defs/unrootedSpec"
+        },
+        "displayOriginNodeId": {
+          "type": "string"
+        },
+        "daylight": {
+          "type": "object",
+          "properties": {
+            "passes": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "attempts": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "accepted": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "work": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "limited": {
+              "type": "boolean"
+            },
+            "beforeScore": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "afterScore": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "passes",
+            "attempts",
+            "accepted",
+            "work",
+            "limited",
+            "beforeScore",
+            "afterScore"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "spec",
+        "displayOriginNodeId",
+        "daylight"
+      ],
+      "additionalProperties": false
+    },
+    "unrootedRenderScene": {
+      "type": "object",
+      "properties": {
+        "units": {
+          "const": "mm"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "graphRevision": {
+          "type": "string"
+        },
+        "settings": {
+          "$ref": "#/$defs/structuredSettings"
+        },
+        "measurements": {
+          "$ref": "#/$defs/textMeasurements"
+        },
+        "junctionGlyphs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/junctionGlyph"
+          }
+        },
+        "edgeStems": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/edgeStem"
+          }
+        },
+        "ports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/port"
+          }
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sceneLabel"
+          }
+        },
+        "bounds": {
+          "type": "object",
+          "properties": {
+            "minX": {
+              "type": "number"
+            },
+            "minY": {
+              "type": "number"
+            },
+            "maxX": {
+              "type": "number"
+            },
+            "maxY": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "minX",
+            "minY",
+            "maxX",
+            "maxY"
+          ],
+          "additionalProperties": false
+        },
+        "slotPasses": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        },
+        "nodeOffsets": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "depth": {
+                "type": "number"
+              },
+              "shift": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "depth",
+              "shift"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "labelOffsets": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/point"
+          }
+        },
+        "unrooted": {
+          "$ref": "#/$defs/unrootedScene"
+        }
+      },
+      "required": [
+        "units",
+        "revision",
+        "graphRevision",
+        "settings",
+        "measurements",
+        "junctionGlyphs",
+        "edgeStems",
+        "ports",
+        "labels",
+        "bounds",
+        "slotPasses",
+        "nodeOffsets",
+        "unrooted"
+      ],
+      "additionalProperties": false
+    },
+    "unrootedView": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "intent": {
+          "const": "unrooted"
+        },
+        "adapter": {
+          "const": "unrooted-angle-v1"
+        },
+        "inputRevision": {
+          "type": "string"
+        },
+        "input": {
+          "type": "object",
+          "properties": {
+            "basis": {
+              "$ref": "#/$defs/scientificBasis"
+            },
+            "root": {
+              "$ref": "#/$defs/root"
+            },
+            "traversal": {
+              "$ref": "#/$defs/traversal"
+            },
+            "corrections": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/correction"
+              }
+            }
+          },
+          "required": [
+            "basis",
+            "root",
+            "traversal",
+            "corrections"
+          ],
+          "additionalProperties": false
+        },
+        "projection": {
+          "$ref": "#/$defs/projectionSpec"
+        },
+        "graph": {
+          "$ref": "#/$defs/displayGraph"
+        },
+        "scene": {
+          "$ref": "#/$defs/unrootedRenderScene"
+        },
+        "qa": {
+          "$ref": "#/$defs/sceneQA"
+        },
+        "pinnedNodes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "pinnedEdges": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "highlights": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "intent",
+        "adapter",
+        "inputRevision",
+        "input",
+        "projection",
+        "graph",
+        "scene",
+        "qa",
+        "pinnedNodes",
+        "pinnedEdges",
+        "highlights"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

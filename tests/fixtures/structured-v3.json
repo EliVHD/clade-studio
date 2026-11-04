@@ -1,0 +1,755 @@
+{
+  "format": "phylogenetic-tree-studio",
+  "version": 3,
+  "documentId": "5e25bec9-2ee0-4a3d-87d4-4f65b32406b0",
+  "title": "Synthetic V2 migration fixture",
+  "createdWith": null,
+  "lastSavedWith": null,
+  "sources": {
+    "source-6f15744a855c61ecd839c3494fecb4084578b1d7c8b8bc8af01108421f47278f": {
+      "id": "source-6f15744a855c61ecd839c3494fecb4084578b1d7c8b8bc8af01108421f47278f",
+      "role": "topology",
+      "mediaType": "text/x-newick",
+      "sha256": "6f15744a855c61ecd839c3494fecb4084578b1d7c8b8bc8af01108421f47278f",
+      "hashBasis": "legacy-utf8-text",
+      "referenceIds": [],
+      "metadataStatus": "incomplete",
+      "attribution": {},
+      "content": "((A:1,B:2):1,(C:1,D:3):2);"
+    }
+  },
+  "scientific": {
+    "basis": {
+      "id": "basis-1",
+      "name": "Unspecified imported tree",
+      "question": "",
+      "relationshipKind": "unspecified",
+      "entityKind": "unspecified",
+      "edgeMeaning": "",
+      "evidenceBasis": "",
+      "sourceIds": [
+        "source-6f15744a855c61ecd839c3494fecb4084578b1d7c8b8bc8af01108421f47278f"
+      ],
+      "referenceIds": [],
+      "provider": null,
+      "release": null,
+      "retrievedAt": null,
+      "epistemicStatus": "unspecified",
+      "limitations": "Scientific meaning, evidence and redistribution rights have not been supplied.",
+      "rightsRecordIds": []
+    },
+    "primarySourceId": "source-6f15744a855c61ecd839c3494fecb4084578b1d7c8b8bc8af01108421f47278f",
+    "root": {
+      "status": "unspecified",
+      "explanation": "Legacy traversal preserved (serialization_origin_not_biological_root); it does not by itself establish a biological root.",
+      "referenceIds": []
+    },
+    "traversal": {
+      "kind": "node",
+      "sourceNodeId": "n000000",
+      "status": "serialization_origin_not_biological_root"
+    },
+    "selection": {
+      "kind": "all"
+    },
+    "reduction": {
+      "algorithm": "maximal_frontier_v1",
+      "sourceSha256": "6f15744a855c61ecd839c3494fecb4084578b1d7c8b8bc8af01108421f47278f",
+      "root": {
+        "kind": "node",
+        "sourceNodeId": "n000000",
+        "status": "serialization_origin_not_biological_root"
+      },
+      "globalThreshold": 0,
+      "thresholdOverrides": [],
+      "protectOverridePaths": true,
+      "comparison": "strict_less_than",
+      "protect": [],
+      "collapse": [],
+      "expand": [],
+      "resolvedFrontierSourceNodeIds": [
+        "n000002",
+        "n000003",
+        "n000005",
+        "n000006"
+      ]
+    },
+    "corrections": [],
+    "edgeMeasure": null
+  },
+  "views": {
+    "view-1": {
+      "id": "view-1",
+      "name": "Artistic arrangement",
+      "intent": "artistic",
+      "adapter": "legacy-artistic-v1",
+      "layout": {
+        "nodes": {
+          "n000000": {
+            "x": 43.199999999999996,
+            "y": 134.2
+          },
+          "n000001": {
+            "x": 25.134598391868003,
+            "y": 96.64854199321053
+          },
+          "n000002": {
+            "x": 11.529813365622982,
+            "y": 111.49889882334985
+          },
+          "n000003": {
+            "x": 22.080521231068907,
+            "y": 25.819625223716145
+          },
+          "n000004": {
+            "x": 65.44825568192898,
+            "y": 92.70335244101099
+          },
+          "n000005": {
+            "x": 67.1071911239722,
+            "y": 29.988101176650147
+          },
+          "n000006": {
+            "x": 82.2729940997521,
+            "y": 112.3588547762838
+          }
+        },
+        "routes": {
+          "n000001": {
+            "segments": [
+              {
+                "c1": {
+                  "x": 38.43583924925772,
+                  "y": 121.24267340621456
+                },
+                "c2": {
+                  "x": 32.41403871321372,
+                  "y": 108.72552073728475
+                },
+                "end": {
+                  "x": 25.134598391868003,
+                  "y": 96.64854199321053
+                }
+              }
+            ]
+          },
+          "n000002": {
+            "segments": [
+              {
+                "c1": {
+                  "x": 20.627389991108142,
+                  "y": 101.887292290461
+                },
+                "c2": {
+                  "x": 17.6257949823598,
+                  "y": 105.70407790050744
+                },
+                "end": {
+                  "x": 11.529813365622982,
+                  "y": 111.49889882334985
+                }
+              }
+            ]
+          },
+          "n000003": {
+            "segments": [
+              {
+                "c1": {
+                  "x": 23.32218606361316,
+                  "y": 73.3169383828417
+                },
+                "c2": {
+                  "x": 22.304160343346794,
+                  "y": 49.70729945967691
+                },
+                "end": {
+                  "x": 22.080521231068907,
+                  "y": 25.819625223716145
+                }
+              }
+            ]
+          },
+          "n000004": {
+            "segments": [
+              {
+                "c1": {
+                  "x": 49.35844544200794,
+                  "y": 120.80795807185926
+                },
+                "c2": {
+                  "x": 56.7745306693176,
+                  "y": 106.97574221886293
+                },
+                "end": {
+                  "x": 65.44825568192898,
+                  "y": 92.70335244101099
+                }
+              }
+            ]
+          },
+          "n000005": {
+            "segments": [
+              {
+                "c1": {
+                  "x": 66.79562077059855,
+                  "y": 71.52023337342808
+                },
+                "c2": {
+                  "x": 67.34859925127961,
+                  "y": 50.61514961864113
+                },
+                "end": {
+                  "x": 67.1071911239722,
+                  "y": 29.988101176650147
+                }
+              }
+            ]
+          },
+          "n000006": {
+            "segments": [
+              {
+                "c1": {
+                  "x": 70.26211521321487,
+                  "y": 99.53322186556456
+                },
+                "c2": {
+                  "x": 75.87036135248924,
+                  "y": 106.08505597732217
+                },
+                "end": {
+                  "x": 82.2729940997521,
+                  "y": 112.3588547762838
+                }
+              }
+            ]
+          }
+        },
+        "pinnedNodes": [
+          "n000002"
+        ],
+        "pinnedEdges": [],
+        "childOrder": {},
+        "mode": "organic"
+      },
+      "appearance": {
+        "widthMm": 90,
+        "heightMm": 220,
+        "strokeMm": 0.25,
+        "taper": 0.8,
+        "clearanceMm": 0.6,
+        "toleranceMm": 0.025,
+        "junctionMm": 1,
+        "sourceUnitMm": 30,
+        "labels": false,
+        "labelOffsets": {
+          "n000002": {
+            "x": 4,
+            "y": 3
+          }
+        }
+      }
+    }
+  },
+  "activeViewId": "view-1",
+  "provenance": {
+    "references": {},
+    "methods": {
+      "newick-parser@1.0.0": {
+        "id": "newick-parser",
+        "version": "1.0.0",
+        "category": "import",
+        "status": "implemented",
+        "specification": "Parse one Newick tree, preserving source text, local IDs, raw labels, comments and length tokens. No support type is inferred from numeric labels.",
+        "specificationSha256": "df2868ed492b0c5af089ee20b8b55d64f977143bbade3f54ea8df502cd3562d6",
+        "parameterSchema": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "defaults": {},
+        "limitations": [
+          "Only the supported Newick dialect; no sequence inference."
+        ],
+        "referenceUses": []
+      },
+      "maximal-frontier@1.0.0": {
+        "id": "maximal-frontier",
+        "version": "1.0.0",
+        "category": "scientific",
+        "status": "implemented",
+        "specification": "maximal_frontier_v1: original-tip-weighted mean descendant distance, strict less-than threshold, protected override paths and explicit collapse/expand/protect rules. Preserve exhaustive original tip memberships.",
+        "specificationSha256": "5476846d2315714317c4e4b718f11ac8f2d1f382149d7c63aedfdca5b85f7567",
+        "parameterSchema": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "defaults": {},
+        "limitations": [
+          "Root is explicitly assumed; missing lengths prevent distance-threshold collapsing."
+        ],
+        "referenceUses": []
+      },
+      "organic-initializer@1.0.0": {
+        "id": "organic-initializer",
+        "version": "1.0.0",
+        "category": "layout",
+        "status": "implemented",
+        "specification": "Existing deterministic organic initializer: source-distance-derived normalized depth, child-order placement and cubic route construction. Stored pins and supplied existing geometry may constrain results.",
+        "specificationSha256": "1e581c0e980e64dcc206a9d126ca22448bee7ff6bb268c8f2653e753c5254e4b",
+        "parameterSchema": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "defaults": {},
+        "limitations": [
+          "Artistic coordinates are not a quantitative phylogram or chronogram."
+        ],
+        "referenceUses": []
+      }
+    },
+    "operations": {
+      "operation-310c635b021b881e6bc23ff6140eac98829a0eb8741b879ecf67d58cbda77482": {
+        "id": "operation-310c635b021b881e6bc23ff6140eac98829a0eb8741b879ecf67d58cbda77482",
+        "kind": "context",
+        "methods": [
+          {
+            "key": "newick-parser@1.0.0",
+            "buildId": null
+          }
+        ],
+        "scope": {
+          "sourceId": "source-6f15744a855c61ecd839c3494fecb4084578b1d7c8b8bc8af01108421f47278f",
+          "viewId": "view-1",
+          "components": [
+            "source"
+          ],
+          "sourceNodeIds": []
+        },
+        "inputs": {},
+        "outputs": {
+          "source": "3e35cf1ef2466e510e529b77e5cf2a04637ce7610a0fff6e8d644a94a232759a"
+        },
+        "parameters": {
+          "sourceSha256": "6f15744a855c61ecd839c3494fecb4084578b1d7c8b8bc8af01108421f47278f"
+        },
+        "referenceUses": [],
+        "result": {
+          "sourceAndFinalGeometryPreserved": true,
+          "importerBuildId": null
+        },
+        "recordedAt": "2026-10-28T10:44:35.277Z",
+        "notes": "New document baseline. Source inference was not performed by this application."
+      },
+      "operation-405a5cf5ee961c9525607dd8f0586ccbe66cb2aba051fed682cb5d6f9c007d72": {
+        "id": "operation-405a5cf5ee961c9525607dd8f0586ccbe66cb2aba051fed682cb5d6f9c007d72",
+        "kind": "scientific",
+        "methods": [
+          {
+            "key": "maximal-frontier@1.0.0",
+            "buildId": null
+          }
+        ],
+        "scope": {
+          "sourceId": "source-6f15744a855c61ecd839c3494fecb4084578b1d7c8b8bc8af01108421f47278f",
+          "viewId": "view-1",
+          "components": [
+            "scientific"
+          ],
+          "sourceNodeIds": []
+        },
+        "inputs": {
+          "source": {
+            "revision": "3e35cf1ef2466e510e529b77e5cf2a04637ce7610a0fff6e8d644a94a232759a",
+            "operationId": "operation-310c635b021b881e6bc23ff6140eac98829a0eb8741b879ecf67d58cbda77482"
+          }
+        },
+        "outputs": {
+          "scientific": "9f7cffb1cdba8fc1e9e4f3dd80dafd27566e3ab617321bfc59176fd627fbdb71"
+        },
+        "parameters": {
+          "recipe": {
+            "algorithm": "maximal_frontier_v1",
+            "sourceSha256": "6f15744a855c61ecd839c3494fecb4084578b1d7c8b8bc8af01108421f47278f",
+            "root": {
+              "kind": "node",
+              "sourceNodeId": "n000000",
+              "status": "serialization_origin_not_biological_root"
+            },
+            "globalThreshold": 0,
+            "thresholdOverrides": [],
+            "protectOverridePaths": true,
+            "comparison": "strict_less_than",
+            "protect": [],
+            "collapse": [],
+            "expand": [],
+            "resolvedFrontierSourceNodeIds": [
+              "n000002",
+              "n000003",
+              "n000005",
+              "n000006"
+            ]
+          }
+        },
+        "referenceUses": [],
+        "result": {
+          "sourceAndFinalGeometryPreserved": true,
+          "importerBuildId": null
+        },
+        "recordedAt": "2026-10-28T10:44:35.277Z",
+        "notes": "New document baseline. Source inference was not performed by this application."
+      },
+      "operation-77f6edd31490c19db97c1b4cd7895a85b4576eb4efc7af7053f56a84d6554471": {
+        "id": "operation-77f6edd31490c19db97c1b4cd7895a85b4576eb4efc7af7053f56a84d6554471",
+        "kind": "context",
+        "methods": [],
+        "scope": {
+          "sourceId": "source-6f15744a855c61ecd839c3494fecb4084578b1d7c8b8bc8af01108421f47278f",
+          "viewId": "view-1",
+          "components": [
+            "document/title",
+            "view/view-1/appearance",
+            "view/view-1/intent",
+            "view/view-1/name",
+            "view/view-1/pins"
+          ],
+          "sourceNodeIds": []
+        },
+        "inputs": {
+          "source": {
+            "revision": "3e35cf1ef2466e510e529b77e5cf2a04637ce7610a0fff6e8d644a94a232759a",
+            "operationId": "operation-310c635b021b881e6bc23ff6140eac98829a0eb8741b879ecf67d58cbda77482"
+          }
+        },
+        "outputs": {
+          "document/title": "6d81eec21793a20425194f67a19ca509955a49f01dcfb0e6641f8518c5cc8d9d",
+          "view/view-1/appearance": "4f67357d461cf99a857ead10e3d64edeb634c0026750cab198094d2fed297bff",
+          "view/view-1/intent": "5eb0832b00caec0a251caf322b3df42f687e30528094b934ea70e16c24bca965",
+          "view/view-1/name": "aabad98aa94c201347fad1921f8ad8e417d6bc2124feecddd755a3d80001ff60",
+          "view/view-1/pins": "57501e5c6808b3e14852a4ea21dc7873abf9409032a06f9b740c973e83f62cf7"
+        },
+        "parameters": {
+          "sourceSha256": "6f15744a855c61ecd839c3494fecb4084578b1d7c8b8bc8af01108421f47278f"
+        },
+        "referenceUses": [],
+        "result": {
+          "sourceAndFinalGeometryPreserved": true,
+          "importerBuildId": null
+        },
+        "recordedAt": "2026-10-28T10:44:35.277Z",
+        "notes": "New document baseline. Source inference was not performed by this application."
+      },
+      "operation-c98a531f684bf251cd1dd85278aecaf2041704a0d66738bd293ddb9ebcb6eedd": {
+        "id": "operation-c98a531f684bf251cd1dd85278aecaf2041704a0d66738bd293ddb9ebcb6eedd",
+        "kind": "annotation",
+        "methods": [],
+        "scope": {
+          "sourceId": "source-6f15744a855c61ecd839c3494fecb4084578b1d7c8b8bc8af01108421f47278f",
+          "viewId": "view-1",
+          "components": [
+            "view/view-1/labels/n000002",
+            "view/view-1/pins"
+          ],
+          "sourceNodeIds": [
+            "n000002"
+          ]
+        },
+        "inputs": {
+          "view/view-1/pins": {
+            "revision": "57501e5c6808b3e14852a4ea21dc7873abf9409032a06f9b740c973e83f62cf7",
+            "operationId": "operation-77f6edd31490c19db97c1b4cd7895a85b4576eb4efc7af7053f56a84d6554471"
+          }
+        },
+        "outputs": {
+          "view/view-1/labels/n000002": "41a7ac5b3cc3f863725b468351f814dc156b3b1bd832e23bc7699cd9b2eca172",
+          "view/view-1/pins": "4405e0fae4c3738791e4da34af42d79efe776cfcf70cf65cef163881edff8b37"
+        },
+        "parameters": {},
+        "referenceUses": [],
+        "result": {
+          "accepted": true
+        },
+        "recordedAt": "2026-10-28T10:44:35.281Z",
+        "notes": "Synthetic fixture: moved and pinned an endpoint."
+      },
+      "operation-c283f78140cfc76d61326ce568d51ffee39f1bf6630c2258cb1cfe926a89d456": {
+        "id": "operation-c283f78140cfc76d61326ce568d51ffee39f1bf6630c2258cb1cfe926a89d456",
+        "kind": "layout",
+        "methods": [
+          {
+            "key": "organic-initializer@1.0.0",
+            "buildId": null
+          }
+        ],
+        "scope": {
+          "sourceId": "source-6f15744a855c61ecd839c3494fecb4084578b1d7c8b8bc8af01108421f47278f",
+          "viewId": "view-1",
+          "components": [
+            "view/view-1/nodes/n000000",
+            "view/view-1/nodes/n000001",
+            "view/view-1/nodes/n000002",
+            "view/view-1/nodes/n000003",
+            "view/view-1/nodes/n000004",
+            "view/view-1/nodes/n000005",
+            "view/view-1/nodes/n000006",
+            "view/view-1/routes/n000001",
+            "view/view-1/routes/n000002",
+            "view/view-1/routes/n000003",
+            "view/view-1/routes/n000004",
+            "view/view-1/routes/n000005",
+            "view/view-1/routes/n000006"
+          ],
+          "sourceNodeIds": []
+        },
+        "inputs": {
+          "source": {
+            "revision": "3e35cf1ef2466e510e529b77e5cf2a04637ce7610a0fff6e8d644a94a232759a",
+            "operationId": "operation-310c635b021b881e6bc23ff6140eac98829a0eb8741b879ecf67d58cbda77482"
+          },
+          "scientific": {
+            "revision": "9f7cffb1cdba8fc1e9e4f3dd80dafd27566e3ab617321bfc59176fd627fbdb71",
+            "operationId": "operation-405a5cf5ee961c9525607dd8f0586ccbe66cb2aba051fed682cb5d6f9c007d72"
+          },
+          "view/view-1/appearance": {
+            "revision": "4f67357d461cf99a857ead10e3d64edeb634c0026750cab198094d2fed297bff",
+            "operationId": "operation-77f6edd31490c19db97c1b4cd7895a85b4576eb4efc7af7053f56a84d6554471"
+          },
+          "view/view-1/pins": {
+            "revision": "57501e5c6808b3e14852a4ea21dc7873abf9409032a06f9b740c973e83f62cf7",
+            "operationId": "operation-77f6edd31490c19db97c1b4cd7895a85b4576eb4efc7af7053f56a84d6554471"
+          }
+        },
+        "outputs": {
+          "view/view-1/nodes/n000000": "c1e71c0a5b4632d917d9af56d8cbd8aba730c5496166a399250d19a1a99c80de",
+          "view/view-1/nodes/n000001": "4fbda44d148451537db8daac10deeaf36e3cd9004f2ee4b3a4a558aff83797ec",
+          "view/view-1/nodes/n000002": "39b581d000f5815bc6d73457733555d9fd542f65122a5733a3fa242c57e5ff29",
+          "view/view-1/nodes/n000003": "2025594fc78ab0e0f682d4e8f4bf854d7cdb7681aed6ff0e4aa98f9cfd1c3cd8",
+          "view/view-1/nodes/n000004": "d6e664b1cd9a31bf2f362bf993eada4ad0e53b70d60ecf2a004e206eb6d9faf7",
+          "view/view-1/nodes/n000005": "f8e7b4dea2a12e1f75254f46de8fdbbebe6c236ce58d127f1ffee3d56eeff87f",
+          "view/view-1/nodes/n000006": "df1375b753e89517328ad7197d704770e68468bff36c5a686d6c44932098ba40",
+          "view/view-1/routes/n000001": "f4ce3cf14ffb9bba68012b6479eaba4ec8546192db83eb4aa8012ef05e99ea92",
+          "view/view-1/routes/n000002": "cd18515806b7c33585cc0b7f7448e62608d8170a1d5c84d10520a18f6e11cc82",
+          "view/view-1/routes/n000003": "26cef9d9adfebfc3eb6090388f5fb0fdfaecb9de1b234ae581c633de2cef2d4b",
+          "view/view-1/routes/n000004": "0ffcbe47abf6e0f7f710f3ceaad9ca8681a79cf6cbe61f5e3f0a7ccab2bb80bf",
+          "view/view-1/routes/n000005": "0c3ac6fcf123f218f1ff4b4c30fec70a6c062adf83b47765ac13e3e5db809ccf",
+          "view/view-1/routes/n000006": "2524bcb53c32e40680950028a618af6e60b663a43bfcea881598ce6adac178d6"
+        },
+        "parameters": {
+          "presentation": {
+            "widthMm": 90,
+            "heightMm": 220,
+            "strokeMm": 0.25,
+            "taper": 0.8,
+            "clearanceMm": 0.6,
+            "toleranceMm": 0.025,
+            "junctionMm": 1,
+            "sourceUnitMm": 30,
+            "labels": false,
+            "labelOffsets": {}
+          },
+          "childOrder": {},
+          "lineStyle": "curved",
+          "pinnedNodes": [],
+          "pinnedEdges": []
+        },
+        "referenceUses": [],
+        "result": {
+          "sourceAndFinalGeometryPreserved": true,
+          "importerBuildId": null
+        },
+        "recordedAt": "2026-10-28T10:44:35.277Z",
+        "notes": "New document baseline. Source inference was not performed by this application."
+      },
+      "operation-b60e22d3d2658d7b0bf681bc81b7ce38fa1f4f4d12ea5dac7ad199844608b489": {
+        "id": "operation-b60e22d3d2658d7b0bf681bc81b7ce38fa1f4f4d12ea5dac7ad199844608b489",
+        "kind": "manual",
+        "methods": [],
+        "scope": {
+          "sourceId": "source-6f15744a855c61ecd839c3494fecb4084578b1d7c8b8bc8af01108421f47278f",
+          "viewId": "view-1",
+          "components": [
+            "view/view-1/nodes/n000002",
+            "view/view-1/routes/n000002"
+          ],
+          "sourceNodeIds": [
+            "n000002"
+          ]
+        },
+        "inputs": {
+          "scientific": {
+            "revision": "9f7cffb1cdba8fc1e9e4f3dd80dafd27566e3ab617321bfc59176fd627fbdb71",
+            "operationId": "operation-405a5cf5ee961c9525607dd8f0586ccbe66cb2aba051fed682cb5d6f9c007d72"
+          },
+          "source": {
+            "revision": "3e35cf1ef2466e510e529b77e5cf2a04637ce7610a0fff6e8d644a94a232759a",
+            "operationId": "operation-310c635b021b881e6bc23ff6140eac98829a0eb8741b879ecf67d58cbda77482"
+          },
+          "view/view-1/appearance": {
+            "revision": "4f67357d461cf99a857ead10e3d64edeb634c0026750cab198094d2fed297bff",
+            "operationId": "operation-77f6edd31490c19db97c1b4cd7895a85b4576eb4efc7af7053f56a84d6554471"
+          },
+          "view/view-1/nodes/n000002": {
+            "revision": "39b581d000f5815bc6d73457733555d9fd542f65122a5733a3fa242c57e5ff29",
+            "operationId": "operation-c283f78140cfc76d61326ce568d51ffee39f1bf6630c2258cb1cfe926a89d456"
+          },
+          "view/view-1/pins": {
+            "revision": "4405e0fae4c3738791e4da34af42d79efe776cfcf70cf65cef163881edff8b37",
+            "operationId": "operation-c98a531f684bf251cd1dd85278aecaf2041704a0d66738bd293ddb9ebcb6eedd"
+          },
+          "view/view-1/routes/n000002": {
+            "revision": "cd18515806b7c33585cc0b7f7448e62608d8170a1d5c84d10520a18f6e11cc82",
+            "operationId": "operation-c283f78140cfc76d61326ce568d51ffee39f1bf6630c2258cb1cfe926a89d456"
+          }
+        },
+        "outputs": {
+          "view/view-1/nodes/n000002": "331ff7b533287f50a520acabc705582b3ad0acefa1d6b0f3e0410aa3f2dda7de",
+          "view/view-1/routes/n000002": "8fbf6a1c7acb2bab33e3e22bbbcd217e1f894fe47aa451be9fc62b7648787d8b"
+        },
+        "parameters": {},
+        "referenceUses": [],
+        "result": {
+          "accepted": true
+        },
+        "recordedAt": "2026-10-28T10:44:35.282Z",
+        "notes": "Synthetic fixture: moved and pinned an endpoint."
+      },
+      "operation-635890503e2090ddf6b732565b05699d637b007fbe194ecf7542219d2de9c71e": {
+        "id": "operation-635890503e2090ddf6b732565b05699d637b007fbe194ecf7542219d2de9c71e",
+        "kind": "migration",
+        "methods": [],
+        "scope": {
+          "sourceId": "source-6f15744a855c61ecd839c3494fecb4084578b1d7c8b8bc8af01108421f47278f",
+          "viewId": "view-1",
+          "components": [
+            "basis"
+          ],
+          "sourceNodeIds": []
+        },
+        "inputs": {
+          "source": {
+            "revision": "3e35cf1ef2466e510e529b77e5cf2a04637ce7610a0fff6e8d644a94a232759a",
+            "operationId": "operation-310c635b021b881e6bc23ff6140eac98829a0eb8741b879ecf67d58cbda77482"
+          },
+          "scientific": {
+            "revision": "9f7cffb1cdba8fc1e9e4f3dd80dafd27566e3ab617321bfc59176fd627fbdb71",
+            "operationId": "operation-405a5cf5ee961c9525607dd8f0586ccbe66cb2aba051fed682cb5d6f9c007d72"
+          }
+        },
+        "outputs": {
+          "basis": "4585785d1ebd0b81319cbe6dc70e2e4552b5fad325e6dac54e399f1b7b11b7d0"
+        },
+        "parameters": {
+          "migration": "scientific-basis-v3.1",
+          "buildId": null
+        },
+        "referenceUses": [],
+        "result": {
+          "geometryAndExistingHistoryPreserved": true
+        },
+        "recordedAt": "2026-10-28T11:04:04.430Z",
+        "notes": "V2 basis metadata added by exact source identity; generic input meaning remains unspecified. Existing authoring history retained."
+      }
+    },
+    "heads": {
+      "source": {
+        "revision": "3e35cf1ef2466e510e529b77e5cf2a04637ce7610a0fff6e8d644a94a232759a",
+        "operationId": "operation-310c635b021b881e6bc23ff6140eac98829a0eb8741b879ecf67d58cbda77482"
+      },
+      "scientific": {
+        "revision": "9f7cffb1cdba8fc1e9e4f3dd80dafd27566e3ab617321bfc59176fd627fbdb71",
+        "operationId": "operation-405a5cf5ee961c9525607dd8f0586ccbe66cb2aba051fed682cb5d6f9c007d72"
+      },
+      "document/title": {
+        "revision": "6d81eec21793a20425194f67a19ca509955a49f01dcfb0e6641f8518c5cc8d9d",
+        "operationId": "operation-77f6edd31490c19db97c1b4cd7895a85b4576eb4efc7af7053f56a84d6554471"
+      },
+      "view/view-1/appearance": {
+        "revision": "4f67357d461cf99a857ead10e3d64edeb634c0026750cab198094d2fed297bff",
+        "operationId": "operation-77f6edd31490c19db97c1b4cd7895a85b4576eb4efc7af7053f56a84d6554471"
+      },
+      "view/view-1/intent": {
+        "revision": "5eb0832b00caec0a251caf322b3df42f687e30528094b934ea70e16c24bca965",
+        "operationId": "operation-77f6edd31490c19db97c1b4cd7895a85b4576eb4efc7af7053f56a84d6554471"
+      },
+      "view/view-1/name": {
+        "revision": "aabad98aa94c201347fad1921f8ad8e417d6bc2124feecddd755a3d80001ff60",
+        "operationId": "operation-77f6edd31490c19db97c1b4cd7895a85b4576eb4efc7af7053f56a84d6554471"
+      },
+      "view/view-1/pins": {
+        "revision": "4405e0fae4c3738791e4da34af42d79efe776cfcf70cf65cef163881edff8b37",
+        "operationId": "operation-c98a531f684bf251cd1dd85278aecaf2041704a0d66738bd293ddb9ebcb6eedd"
+      },
+      "view/view-1/nodes/n000000": {
+        "revision": "c1e71c0a5b4632d917d9af56d8cbd8aba730c5496166a399250d19a1a99c80de",
+        "operationId": "operation-c283f78140cfc76d61326ce568d51ffee39f1bf6630c2258cb1cfe926a89d456"
+      },
+      "view/view-1/nodes/n000001": {
+        "revision": "4fbda44d148451537db8daac10deeaf36e3cd9004f2ee4b3a4a558aff83797ec",
+        "operationId": "operation-c283f78140cfc76d61326ce568d51ffee39f1bf6630c2258cb1cfe926a89d456"
+      },
+      "view/view-1/nodes/n000002": {
+        "revision": "331ff7b533287f50a520acabc705582b3ad0acefa1d6b0f3e0410aa3f2dda7de",
+        "operationId": "operation-b60e22d3d2658d7b0bf681bc81b7ce38fa1f4f4d12ea5dac7ad199844608b489"
+      },
+      "view/view-1/nodes/n000003": {
+        "revision": "2025594fc78ab0e0f682d4e8f4bf854d7cdb7681aed6ff0e4aa98f9cfd1c3cd8",
+        "operationId": "operation-c283f78140cfc76d61326ce568d51ffee39f1bf6630c2258cb1cfe926a89d456"
+      },
+      "view/view-1/nodes/n000004": {
+        "revision": "d6e664b1cd9a31bf2f362bf993eada4ad0e53b70d60ecf2a004e206eb6d9faf7",
+        "operationId": "operation-c283f78140cfc76d61326ce568d51ffee39f1bf6630c2258cb1cfe926a89d456"
+      },
+      "view/view-1/nodes/n000005": {
+        "revision": "f8e7b4dea2a12e1f75254f46de8fdbbebe6c236ce58d127f1ffee3d56eeff87f",
+        "operationId": "operation-c283f78140cfc76d61326ce568d51ffee39f1bf6630c2258cb1cfe926a89d456"
+      },
+      "view/view-1/nodes/n000006": {
+        "revision": "df1375b753e89517328ad7197d704770e68468bff36c5a686d6c44932098ba40",
+        "operationId": "operation-c283f78140cfc76d61326ce568d51ffee39f1bf6630c2258cb1cfe926a89d456"
+      },
+      "view/view-1/routes/n000001": {
+        "revision": "f4ce3cf14ffb9bba68012b6479eaba4ec8546192db83eb4aa8012ef05e99ea92",
+        "operationId": "operation-c283f78140cfc76d61326ce568d51ffee39f1bf6630c2258cb1cfe926a89d456"
+      },
+      "view/view-1/routes/n000002": {
+        "revision": "8fbf6a1c7acb2bab33e3e22bbbcd217e1f894fe47aa451be9fc62b7648787d8b",
+        "operationId": "operation-b60e22d3d2658d7b0bf681bc81b7ce38fa1f4f4d12ea5dac7ad199844608b489"
+      },
+      "view/view-1/routes/n000003": {
+        "revision": "26cef9d9adfebfc3eb6090388f5fb0fdfaecb9de1b234ae581c633de2cef2d4b",
+        "operationId": "operation-c283f78140cfc76d61326ce568d51ffee39f1bf6630c2258cb1cfe926a89d456"
+      },
+      "view/view-1/routes/n000004": {
+        "revision": "0ffcbe47abf6e0f7f710f3ceaad9ca8681a79cf6cbe61f5e3f0a7ccab2bb80bf",
+        "operationId": "operation-c283f78140cfc76d61326ce568d51ffee39f1bf6630c2258cb1cfe926a89d456"
+      },
+      "view/view-1/routes/n000005": {
+        "revision": "0c3ac6fcf123f218f1ff4b4c30fec70a6c062adf83b47765ac13e3e5db809ccf",
+        "operationId": "operation-c283f78140cfc76d61326ce568d51ffee39f1bf6630c2258cb1cfe926a89d456"
+      },
+      "view/view-1/routes/n000006": {
+        "revision": "2524bcb53c32e40680950028a618af6e60b663a43bfcea881598ce6adac178d6",
+        "operationId": "operation-c283f78140cfc76d61326ce568d51ffee39f1bf6630c2258cb1cfe926a89d456"
+      },
+      "view/view-1/labels/n000002": {
+        "revision": "41a7ac5b3cc3f863725b468351f814dc156b3b1bd832e23bc7699cd9b2eca172",
+        "operationId": "operation-c98a531f684bf251cd1dd85278aecaf2041704a0d66738bd293ddb9ebcb6eedd"
+      },
+      "basis": {
+        "revision": "4585785d1ebd0b81319cbe6dc70e2e4552b5fad325e6dac54e399f1b7b11b7d0",
+        "operationId": "operation-635890503e2090ddf6b732565b05699d637b007fbe194ecf7542219d2de9c71e"
+      }
+    },
+    "replayCoverage": "source-and-final-geometry"
+  },
+  "compatibility": {
+    "originalVersion": 2,
+    "migrationVersion": "scientific-basis-v3.1",
+    "historyStatus": "recorded-from-creation",
+    "notices": [
+      "Version 2 migrated to version 3 with scientific-basis metadata; source, geometry and existing operations preserved."
+    ],
+    "legacyProvenance": {}
+  },
+  "ui": {
+    "selection": []
+  }
+}

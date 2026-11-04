@@ -1,0 +1,32 @@
+[
+  {
+    "source_node_id": "n005483",
+    "raw_label": "Eukaryota_Opisthokonta_Metazoa_Eumetazoa_Bilateria_Coelomata_Protostomia_Lophotrochozoa_Annelida_Polychaeta_Palpata_Canalipalpata_Sabellida_Serpulidae_Serpula_lacrymans_lacrymans_S7.9",
+    "status": "confirmed_annotation_conflict",
+    "display_taxonomy": "Eukaryota; Fungi; Basidiomycota; Serpula lacrymans var. lacrymans S7.9",
+    "evidence_url": "https://www.ncbi.nlm.nih.gov/bioproject/225516",
+    "review_date": "2026-10-25",
+    "applied_to_source": false,
+    "topology_change": false
+  },
+  {
+    "source_node_id": "n005499",
+    "raw_label": "Eukaryota_stramenopiles_Blastocystis_hominis",
+    "status": "placement_review_required",
+    "display_taxonomy": null,
+    "evidence_url": null,
+    "review_date": "2026-10-25",
+    "applied_to_source": false,
+    "topology_change": false
+  },
+  {
+    "source_node_id": "n005524",
+    "raw_label": "Archaeplastida_Viridiplantae_Streptophyta_Streptophytina_Embryophyta_Tracheophyta_Euphyllophyta_Spermatophyta_Magnoliophyta_Liliopsida_commelinids_Poales_Poaceae_PACMAD_clade_Danthonioideae_Danthonieae_Tribolium_castaneum",
+    "status": "confirmed_annotation_conflict",
+    "display_taxonomy": "Eukaryota; Metazoa; Arthropoda; Insecta; Coleoptera; Tribolium castaneum",
+    "evidence_url": "https://www.ncbi.nlm.nih.gov/bioproject/12540",
+    "review_date": "2026-10-25",
+    "applied_to_source": false,
+    "topology_change": false
+  }
+]

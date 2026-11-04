@@ -1,0 +1,47 @@
+import type { ScientificBasis, RootState } from '../model/document.ts';
+import type { Correction, RootSpec } from '../types.ts';
+import type { Point } from '../types.ts';
+export type SelectionSpec = { kind: 'all' } | { kind: 'explicit-tips'; tipIds: string[] };
+export type ProjectionSpec = { selection: SelectionSpec; collapse: string[]; expand: string[]; reveal: string[]; childOrder: Record<string, string[]> };
+export type DisplayNode = { id: string; parent: string | null; children: string[]; selectedMembers: string[]; originalMembers: string[]; omittedMembers: string[]; aggregate: boolean; label: string };
+export type DisplayEdge = { id: string; parent: string; child: string; sourcePath: string[]; sourceEdgeIds: string[]; length: number | null; annotations: { sourceNodeId: string; text: string; position: string }[] };
+export type DisplayGraph = { rootId: string; nodes: Record<string, DisplayNode>; edges: Record<string, DisplayEdge>; order: string[]; endpoints: string[]; representedTips: string[]; omittedTips: string[]; sourceSha256: string };
+export type StructuredSettings = {
+  kind: 'rectangular' | 'circular' | 'fan'; widthMm: number; heightMm: number; marginMm: number;
+  strokeMm: number; junctionMm: number; clearanceMm: number; toleranceMm: number; fontFamily: string; fontSizePt: number;
+  labelGapMm: number; terminalGapMm: number; innerRadiusMm: number; outerRadiusMm: number;
+  startAngleDeg: number; sweepDeg: number; orientationDeg: number; labelPlacement: 'radial' | 'horizontal' | 'tangential'; curves: boolean;
+};
+export type TextMetric = { text: string; widthMm: number; ascentMm: number; descentMm: number; advanceMm?: number; leftMm?: number; rightMm?: number };
+export type TextMeasurements = { fontFamily: string; fontSizePt: number; fontStatus: 'available' | 'substituted' | 'estimated'; metrics: Record<string, TextMetric>; scaleBar?: TextMetric };
+export type Primitive = { kind: 'point'; point: Point } | { kind: 'polyline'; points: Point[] } | { kind: 'arc'; center: Point; radius: number; startDeg: number; endDeg: number };
+export type JunctionGlyph = { id: string; nodeId: string; anchor: Point; geometry: Primitive; span: [number, number]; depth: number };
+export type Port = { id: string; nodeId: string; edgeId: string; end: 'parent' | 'child'; point: Point };
+export type EdgeStem = { id: string; edgeId: string; parentPortId: string; childPortId: string; geometry: Primitive };
+export type SceneLabel = { id: string; nodeId: string; text: string; position: Point; rotationDeg: number; anchor: 'start' | 'end' | 'middle'; corners: Point[] };
+export type SceneIssue = { type: 'incidence' | 'contact' | 'clearance' | 'labels' | 'bounds' | 'legibility' | 'font'; ids: string[]; detail: string };
+export type SceneQA = { status: 'checked' | 'draft'; coveragePassed: boolean; incidencePassed: boolean; crossingPassed: boolean; clearancePassed: boolean; labelCollisions: number; issues: SceneIssue[]; omittedIssueCount: number; checkedPairs: number; limited: boolean; limitations: string[] };
+export type MetricMeasure = { meaning:'substitutions-per-site'|'expected-changes'|'other-distance';unit:string;evidence:string;referenceIds:string[];sourceSha256:string;declaration:'curated'|'user-supplied' };
+export type MetricSpec = {measure:MetricMeasure;mmPerUnit:number;scaleBarValue:number};
+export type MetricScene = {spec:MetricSpec;distances:Record<string,number>;scaleBar:{value:number;from:Point;to:Point;label:string;position:Point;corners:Point[]}};
+export type ClassificationSpec = {sourceSha256:string;authority:string;release:string;evidence:string;referenceIds:string[];rankOrder:string[];ranks:Record<string,string|null>;unrankedPolicy:'parent-link-interpolation-v1'};
+export type ClassificationScene = {spec:ClassificationSpec;topNodeId:string;levels:Record<string,number>;rankLevels:Record<string,number>};
+export type UnrootedSpec = {sourceSha256:string;algorithm:'equal-angle'|'daylight';originNodeId:string|null;edgeLengthMm:number;daylightPasses:number;daylightStrength:number};
+export type UnrootedScene = {spec:UnrootedSpec;displayOriginNodeId:string;daylight:{passes:number;attempts:number;accepted:number;work:number;limited:boolean;beforeScore:number|null;afterScore:number|null}};
+export type RenderScene = {
+  units: 'mm'; revision: string; graphRevision: string; settings: StructuredSettings; measurements: TextMeasurements;
+  junctionGlyphs: JunctionGlyph[]; edgeStems: EdgeStem[]; ports: Port[]; labels: SceneLabel[];
+  unrooted?:UnrootedScene;
+  metric?:MetricScene;
+  classification?:ClassificationScene;
+  labelOffsets?: Record<string, Point>;
+  nodeOffsets: Record<string, { depth: number; shift: number }>;
+  bounds: { minX: number; minY: number; maxX: number; maxY: number }; slotPasses: number;
+};
+export type ArtisticEdit = {kind:'measure-labels';measurements:TextMeasurements} | {kind:'move-junction';nodeIds:string[];delta:Point} | {kind:'move-label';nodeId:string;delta:Point} | {kind:'stem-waypoints';edgeId:string;points:Point[]} | {kind:'appearance';strokeMm:number;curves:boolean};
+export type ArtisticOrigin = {viewId:string;sceneRevision:string;baseScene:RenderScene;edits:ArtisticEdit[]};
+export type StructuredView = {
+  id: string; name: string; intent: 'cladogram' | 'phylogram' | 'taxonomy' | 'unrooted' | 'artistic'; adapter: 'clade-cluster-v1' | 'metric-distance-v1' | 'classification-rank-v1' | 'unrooted-angle-v1' | 'compound-artistic-v1'; artistic?:ArtisticOrigin; inputRevision: string; input: { basis: ScientificBasis; root: RootState; traversal: RootSpec; corrections: Correction[] };
+  projection: ProjectionSpec; graph: DisplayGraph; scene: RenderScene; qa: SceneQA;
+  pinnedNodes: string[]; pinnedEdges: string[]; highlights: string[];
+};

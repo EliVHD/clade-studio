@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A local phylogenetic tree editor with reproducible clade reduction and editable scientific artwork.">
+  <title>Clade Studio — Phylogenetic tree editor</title>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/app/app.js"></script>
+</head>
+<body>
+  <header class="app-header">
+    <a class="brand" href="/" aria-label="Clade Studio home"><svg viewBox="0 0 30 34" aria-hidden="true"><path d="M15 31V21M15 21L6 13V5M15 21L24 13V5M6 13L1 9M24 13L29 9M15 21V10L10 5M15 10L20 5"/></svg><span>Clade<span class="brand-light"> Studio</span><small>PHYLOGENY → FORM</small></span></a>
+    <div class="header-meta"><span class="local-dot"></span> LOCAL WORKSPACE <span class="separator">/</span><span id="source-name">Loading source…</span></div>
+    <div class="header-actions"><a id="guide-link" class="button quiet" href="/guide.html" target="_blank" rel="noopener">Guide</a><button id="datasets-btn" class="button quiet">Datasets</button><button id="import-btn" class="button quiet">Open file</button><button id="save-btn" class="button">Save project</button><button id="export-btn" class="button primary">Export package <span>↗</span></button></div>
+    <input id="file-input" type="file" accept=".nwk,.newick,.tree,.txt,.json" hidden>
+  </header>
+  <main id="explore-view" class="explore-shell" hidden aria-label="Read-only source explorer">
+    <div class="explore-toolbar"><button id="explore-back" class="button">← Editor</button><div class="explore-heading"><span class="eyebrow">EXPLORE · READ ONLY</span><strong id="explore-title"></strong></div><label>Layout <select id="explore-layout"><option value="rectangular">Rectangular</option><option value="circular">Circular</option><option value="fan">Fan</option></select></label><button id="explore-home" class="button">Home / fit</button><button id="explore-out" class="button" aria-label="Explore zoom out">−</button><button id="explore-in" class="button" aria-label="Explore zoom in">+</button></div>
+    <p id="explore-meaning" class="explore-meaning"></p>
+    <div class="explore-body"><aside class="explore-sidebar"><label class="field-label" for="explore-search">Find in the complete source</label><input id="explore-search" class="full-input" type="search" placeholder="Name or source ID" autocomplete="off"><div id="explore-results" aria-live="polite"></div><hr><button id="explore-focus" class="button full-width">Focus selected identity</button><div id="explore-inspector"></div></aside><div id="explore-stage" tabindex="0" aria-label="Read-only source canvas. Drag to pan; scroll to zoom. Keyboard arrows pan, plus and minus zoom, Home fits."><svg id="explore-canvas" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Adaptive full source topology"></svg><div class="explore-legend"><span>◇</span> Shaded region = temporary tip group · click to inspect · double-click to focus</div></div></div>
+    <footer class="explore-footer"><span id="explore-status" role="status"></span><details><summary>Viewing limits / timing</summary><p id="explore-performance"></p><p>Up to 100,000 input nodes, nesting depth 800, 20 MB Newick. SVG timings exclude browser paint. Detail is local and temporary. Return to the editor to save or export accepted artwork.</p></details></footer>
+  </main>
+  <main class="workspace">
+    <aside class="sidebar left-sidebar">
+      <div class="panel-heading"><span class="eyebrow">YOUR SOURCE</span><button id="source-info-btn" class="icon-button" aria-label="Source information">ⓘ</button></div>
+      <h1 id="project-title">The tree of life</h1><p class="muted source-subtitle" id="source-subtitle">Hug et al. · Ribosomal protein tree</p><button id="basis-info-btn" class="text-button basis-summary">Scientific basis…</button>
+      <div class="statistics"><div><strong id="endpoint-count">—</strong><span>visible endpoints</span></div><div><strong id="tip-count">—</strong><span>source tips</span></div></div>
+      <div class="coverage"><span id="coverage-dot">●</span><span id="coverage-text">Verifying source coverage</span></div>
+      <div class="tabs" role="tablist" aria-label="Editor tools"><button class="tab active" data-panel="reduce" role="tab" aria-selected="true">Reduce</button><button class="tab" data-panel="arrange" role="tab" aria-selected="false">Arrange</button><button class="tab" data-panel="shape" role="tab" aria-selected="false">Shape</button><button class="tab" data-panel="fit" role="tab" aria-selected="false">Fit</button><button class="tab" data-panel="check" role="tab" aria-selected="false">Check</button><button class="tab" data-panel="structured" role="tab" aria-selected="false">Layout</button></div>
+      <div class="panel-scroll">
+        <section id="panel-reduce" class="tool-panel">
+          <div class="section-title"><h2>Level of detail</h2><button id="reset-example" class="text-button">Example preset</button></div>
+          <p class="help">Collapse clades by their mean original distance to descendant tips.</p>
+          <label class="field-label" for="global-threshold">Global threshold <span id="threshold-unit">source units</span></label>
+          <div class="slider-row"><input id="global-threshold" type="range" min="0" max="1.5" step=".01" value=".65"><input id="global-value" class="number-input" type="number" min="0" step=".01" value=".65" aria-label="Global threshold value"></div>
+          <div class="slider-labels"><span>More detail</span><span>More compression</span></div>
+          <div class="section-title"><h2>Clade overrides</h2><span id="override-count" class="count-tag">3</span></div>
+          <div id="override-list"></div>
+          <p class="help note">A clade override protects its path. Source lengths and relationships stay fixed.</p>
+          <div class="section-title"><h2>Search imported data</h2><span class="key-hint">⌕</span></div>
+          <input id="search" class="full-input" type="search" placeholder="Organism, group or source ID…" aria-label="Search organisms and groups in this file">
+          <div id="search-results" class="search-results"></div>
+          <div class="section-title"><h2>Source notes</h2><span id="warning-count" class="count-tag warning">3</span></div>
+          <div id="source-notes" class="source-notes"></div>
+        </section>
+        <section id="panel-arrange" class="tool-panel" hidden>
+          <div id="legacy-inspection-note" hidden><p>This project stores a legacy normalized inspection. Its coordinates are preserved, but do not form a calibrated distance or time scale.</p><button id="make-artistic" class="button">Make artistic</button><p class="help">Keeps every coordinate and enables manual editing.</p></div>
+          <h2>Physical canvas</h2><p class="help">All coordinates are in millimetres. Resizing scales the artwork; stroke width stays in physical units.</p>
+          <div class="field-grid"><label>Width, mm<input id="page-width" type="number" min="20" max="2000" value="90"></label><label>Height, mm<input id="page-height" type="number" min="20" max="2000" value="220"></label></div>
+          <h2>Line appearance</h2>
+          <fieldset id="artwork-style" class="plain-fieldset">
+            <div class="field-grid"><label>Line width, mm<input id="stroke" type="number" min=".01" max="10" step=".05" value=".25"></label><label>Branch taper<input id="taper" type="number" min="0" max="5" step=".1" value=".8"></label></div>
+            <div class="slider-row"><input id="stroke-slider" aria-label="Line width" type="range" min=".01" max="2" step=".01" value=".25"></div>
+            <label class="check-row"><input id="allow-curves" type="checkbox" checked> Allow curved lines</label>
+            <p id="line-style-status" class="help compact-help"></p>
+            <p class="help compact-help">Width is in physical millimetres; taper 0 gives uniform lines. With curves off, junctions and waypoints connect with straight segments. Switching back restores the stored handles.</p>
+          </fieldset>
+          <h2>Arrangement</h2><p class="help">The organic sweep leaves room for genuine descendants to turn downward into roots. Manual changes remain until you regenerate.</p>
+          <button id="regenerate-btn" class="button full-width">Regenerate unpinned geometry</button>
+          <button id="routing-demo-btn" class="button full-width">Load crown-to-root demo</button>
+          <p class="help">The six-endpoint demo uses genuine Hug source branches and retains all 3,083 tips through clade membership.</p>
+          <label class="check-row"><input id="show-nodes" type="checkbox" checked> Show scientific junctions</label>
+          <label class="check-row"><input id="show-labels" type="checkbox"> Numbered reference</label>
+          <label class="check-row"><input id="move-subtree" type="checkbox"> Drag whole selected subtree</label>
+          <label class="check-row"><input id="snap-grid" type="checkbox"> Snap junctions to 1 mm grid</label>
+          <h2>Navigation & selection</h2><div class="shortcut-list"><span>Zoom</span><kbd>Scroll</kbd><span>Pan</span><kbd>Space + drag</kbd><span>Add to selection</span><kbd>Shift + click</kbd><span>Select junctions in area</span><kbd>Alt + drag</kbd><span>Undo / redo</span><kbd>Ctrl Z / Shift Z</kbd></div>
+          <p class="help">Area selection includes junctions inside the rectangle. The saved selected IDs stay fixed when moved. Curve waypoints are geometry, not new branches.</p>
+        </section>
+        <section id="panel-shape" class="tool-panel" hidden>
+          <p id="shape-readonly" class="help note" hidden>Switch to Organic to use drawing guides and a reference image.</p>
+          <fieldset id="shape-fields" class="plain-fieldset">
+            <h2>Endpoint borders</h2>
+            <p class="help">Select a group of endpoints, then draw its border. Repeat for another group; Fit can use all saved borders together.</p>
+            <button id="select-endpoints" class="button full-width" aria-pressed="false">Select endpoints</button>
+            <label class="field-label" for="border-scope">Endpoints to shape</label>
+            <select id="border-scope" class="full-input"><option value="endpoints">Selected endpoints only</option><option value="selected">Endpoints of selected clades</option><option value="all">All visible endpoints</option></select>
+            <p id="border-scope-count" class="help compact-help"></p>
+            <div class="button-row"><button id="draw-border" class="button" aria-pressed="false">Draw border</button><button id="edit-border" class="button" aria-pressed="false">Edit border</button><button id="finish-design" class="button">Edit branches</button></div>
+            <label class="field-label" for="border-list">Saved borders</label>
+            <select id="border-list" class="full-input"><option value="">No borders yet</option></select>
+            <div class="button-row"><button id="border-rebind" class="button">Assign selected endpoints</button><button id="border-select-assigned" class="button">Select assigned</button></div>
+            <p class="help compact-help">Assignment replaces this border's group. Endpoints assigned here transfer from other borders; their remaining targets stay unchanged.</p>
+            <p id="border-status" class="help compact-help" aria-live="polite">Select endpoints, then draw a border on the canvas.</p>
+            <label class="check-row"><input id="border-closed" type="checkbox"> Close into a loop</label>
+            <label class="field-label" for="border-placement">Endpoint placement</label>
+            <select id="border-placement" class="full-input"><option value="spread">Even spacing along border</option><option value="nearest">Nearest point on border</option></select>
+            <div class="field-grid"><label>Inset, mm<input id="border-inset" type="number" min="-50" max="50" step=".1" value="2"></label><label>Variation ± mm<input id="border-variation" type="number" min="0" max="50" step=".1" value="1"></label></div>
+            <p class="help compact-help">Positive inset moves toward the tree (inside a loop). Variation adds repeatable, uneven spacing from the line.</p>
+            <div class="button-row"><button id="border-randomize" class="button">New variation</button></div>
+            <button id="apply-border" class="button primary full-width">Apply to endpoints</button>
+            <div class="button-row"><button id="delete-border" class="button">Delete border</button></div>
+            <label class="check-row"><input id="show-borders" type="checkbox" checked> Show borders and target preview</label>
+            <div class="small-divider"></div>
+            <h2>Reference image</h2>
+            <p class="help">Project a design onto the page while you refine branches. PNG, JPEG or WebP, up to 8 MB.</p>
+            <input id="reference-file" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+            <div class="button-row"><button id="choose-reference" class="button">Choose image</button></div>
+            <div id="reference-controls" hidden>
+              <p id="reference-name" class="help reference-name"></p>
+              <label class="field-label" for="reference-opacity">Opacity <output id="reference-opacity-value">30%</output></label>
+              <div class="slider-row"><input id="reference-opacity" type="range" min="0" max="100" step="1" value="30"></div>
+              <label class="check-row"><input id="reference-visible" type="checkbox" checked> Show image</label>
+              <label class="check-row"><input id="reference-above" type="checkbox"> Place above branches</label>
+              <div class="button-row"><button id="move-reference" class="button" aria-pressed="false">Move image</button><button id="fit-reference" class="button">Fit image to page</button></div>
+              <div class="field-grid"><label>X, mm<input id="reference-x" type="number" step=".1"></label><label>Y, mm<input id="reference-y" type="number" step=".1"></label></div>
+              <div class="field-grid"><label>Width, mm<input id="reference-width" type="number" min=".1" max="9999" step=".1"></label><label>Rotation, °<input id="reference-rotation" type="number" min="-360" max="360" step="1"></label></div>
+              <p class="help compact-help">Width keeps the image proportions. Choose Edit branches to lock the image in place.</p>
+              <button id="remove-reference" class="button full-width">Remove image</button>
+            </div>
+            <p class="help note">Guides and the embedded image are saved in your project. Tree SVG exports contain only the artwork and its annotations.</p>
+          </fieldset>
+        </section>
+        <section id="panel-fit" class="tool-panel" hidden>
+          <h2>Fit to silhouette</h2>
+          <p class="help">Arrange endpoints, junctions and curves together. Draw and assign borders in Shape, then preview a fit here.</p>
+          <p id="fit-readonly" class="help note" hidden>Switch to Organic to fit the artwork.</p>
+          <fieldset id="fit-artwork-style" class="plain-fieldset">
+            <div class="field-grid"><label>Line width, mm<input id="fit-stroke" type="number" min=".01" max="10" step=".05" value=".25"></label><label>Branch taper<input id="fit-taper" type="number" min="0" max="5" step=".1" value=".8"></label></div>
+            <label class="check-row"><input id="fit-allow-curves" type="checkbox" checked> Allow curved lines</label>
+          </fieldset>
+          <fieldset id="auto-fit-settings" class="plain-fieldset">
+            <label class="field-label" for="fit-border-scope">Target borders</label>
+            <select id="fit-border-scope" class="full-input"><option value="all">All saved borders</option><option value="active">Active border only</option></select>
+            <h2>Branch direction</h2>
+            <p class="help">The arrow points from parent branches toward endpoints. Guide junction positions and curve tangents together.</p>
+            <label class="field-label" for="fit-direction-scope">Direction applies to</label>
+            <select id="fit-direction-scope" class="full-input"><option value="">Whole fit</option></select>
+            <label class="field-label" for="fit-direction-mode">Direction mode</label>
+            <select id="fit-direction-mode" class="full-input"><option value="off">Automatic</option><option value="custom">Set direction</option></select>
+            <fieldset id="fit-direction-fields" class="plain-fieldset" disabled>
+              <div class="field-grid"><label>Point toward<select id="fit-direction-preset"><option value="">Custom angle</option><option value="270">↑ Up</option><option value="90">↓ Down</option><option value="180">← Left</option><option value="0">→ Right</option></select></label><label>Angle, °<input id="fit-direction-angle" type="number" min="-360" max="360" step="1" value="270"></label></div>
+              <label class="field-label" for="fit-direction-strength">Direction strength <output id="fit-direction-strength-value">80%</output></label>
+              <div class="slider-row"><input id="fit-direction-strength" type="range" min="0" max="100" step="1" value="80"></div>
+            </fieldset>
+            <button id="draw-direction" class="button full-width" aria-pressed="false">Draw direction arrow</button>
+            <p id="fit-direction-status" class="help compact-help"></p>
+            <h2>Junction placement</h2>
+            <p class="help">Control where clades divide and how much open space surrounds their forks.</p>
+            <label class="field-label" for="fit-depth">Branching depth <output id="fit-depth-value">45%</output></label>
+            <div class="slider-row"><input id="fit-depth" type="range" min="0" max="100" step="1" value="45"></div>
+            <div class="fit-range-labels"><span>Earlier forks · near origin</span><span>Later · near border</span></div>
+            <div class="field-grid"><label>Junction spacing, mm<input id="fit-spacing" type="number" min=".1" max="20" step=".1" value="3"></label></div>
+            <label class="field-label" for="fit-routing">Spacing-aware routing <output id="fit-routing-value">75%</output></label>
+            <div class="slider-row"><input id="fit-routing" type="range" min="0" max="100" step="1" value="75"></div>
+            <label class="field-label" for="fit-fork-spread">Fork spread <output id="fit-fork-spread-value">65%</output></label>
+            <div class="slider-row"><input id="fit-fork-spread" type="range" min="0" max="100" step="1" value="65"></div>
+            <p class="help compact-help">Routing searches for space around the full strokes and adjusts junctions. Fork spread opens branch angles around the common direction. Higher values favor wider, less parallel forks. Straight mode adjusts junctions without adding bends.</p>
+            <label class="field-label" for="fit-flow">Retain current bends <output id="fit-flow-value">40%</output></label>
+            <div class="slider-row"><input id="fit-flow" type="range" min="0" max="100" step="1" value="40"></div>
+            <p class="help compact-help">Lower values rebuild the branching structure toward the borders. Higher values retain more of its current flow.</p>
+            <h2>Junction anchors</h2>
+            <p class="help">Position important forks over your reference, then pin them. The origin always stays fixed. Unassigned clades stay in place.</p>
+            <div class="button-row"><button id="fit-pin-selected" class="button">Pin selected junctions</button><button id="fit-unpin-selected" class="button">Unpin selected</button></div>
+            <p id="fit-anchor-status" class="help compact-help"></p>
+            <h2>Overall fit</h2>
+            <label class="field-label" for="fit-strength">Fitting strength <output id="fit-strength-value">100%</output></label>
+            <div class="slider-row"><input id="fit-strength" type="range" min="0" max="100" step="1" value="100"></div>
+            <label class="field-label" for="fit-smoothing">Curve smoothing <output id="fit-smoothing-value">70%</output></label>
+            <div class="slider-row"><input id="fit-smoothing" type="range" min="0" max="100" step="1" value="70"></div>
+          </fieldset>
+          <button id="preview-fit" class="button primary full-width">Preview automatic fit</button>
+          <button id="cancel-fit" class="button full-width" hidden>Cancel calculation</button>
+          <label id="fit-compare-row" class="check-row" hidden><input id="fit-compare" type="checkbox"> Compare original arrangement</label>
+          <div id="fit-summary" class="fit-summary" aria-live="polite"><p class="help">Your artwork changes only when you keep the preview.</p></div>
+          <p class="help note">Spacing is a target, not a guarantee. Every preview runs geometry checks. Pins, crowded borders and source connectivity can limit the fit.</p>
+        </section>
+        <section id="panel-structured" class="tool-panel" hidden>
+          <button id="teacher-class-example" class="button full-width">New synthetic classification</button><button id="teacher-example" class="button full-width">New synthetic sample tree</button><p class="help">Invented A–E topology for trying the layout controls. Your current unsaved project is downloaded before switching.</p><h2>Scientific basis</h2><p class="help">Choose rooted or unrooted relationships, documented source distances or supplied classification ranks. Layouts do not infer new relationships or a time scale.</p>
+          <button id="teacher-basis" class="button full-width">Describe scientific basis</button><button id="teacher-root" class="button full-width">Inspect / declare biological root</button>
+          <p id="teacher-capability" class="help note"></p>
+          <div class="structured-only"><h2>Taxon selection</h2><label class="field-label" for="teacher-selection">Taxon selection</label><select id="teacher-selection" class="full-input"><option value="all">All original source tips</option><option value="explicit-tips">Exact selected source tips</option></select>
+          <label class="field-label" for="teacher-tips">Source tip IDs (one per line)</label><textarea id="teacher-tips" class="full-input" rows="4" placeholder="n000002
+n000004"></textarea>
+          <input id="teacher-search" class="full-input" type="search" placeholder="Search source tip names or IDs…" aria-label="Find source tip"><p class="help">Search the organisms / endpoints in this file. Spaces match underscores; names and IDs stay separate. No online lookup.</p><div id="teacher-tip-results" class="search-results"></div>
+          <button id="teacher-use-clade" class="button full-width">Use selected clade's source tips</button>
+          <label class="field-label" for="teacher-groups">Starting groups for a new view</label><select id="teacher-groups" class="full-input"><option value="current">Current artistic endpoint groups</option><option value="tips">Individual selected tips</option></select>
+          </div><h2>Layout &amp; saved views</h2><label class="field-label" for="teacher-saved">Saved structured views</label><select id="teacher-saved" class="full-input"><option value="">New view</option></select>
+          <label class="field-label" for="teacher-name">View name</label><input id="teacher-name" class="full-input" maxlength="500" value="Cladogram">
+          <div class="structured-only"><label class="check-row"><input id="teacher-new" type="checkbox" checked> Save preview as a separate view</label>
+          <label class="field-label" for="teacher-encoding">Branch placement</label><select id="teacher-encoding" class="full-input"><option value="cladogram">Cladogram · relationships only</option><option value="phylogram">Phylogram · source distances</option><option value="taxonomy">Classification · supplied ranks</option><option value="unrooted">Unrooted · relationships without a root</option></select>
+          <section id="teacher-unrooted-controls" hidden><h2>Unrooted spacing</h2><p class="help">The display origin is a source vertex, not a biological root. Equal display-edge spacing carries no source distance. Choose tips directly; rooted clade operations are unavailable.</p><label class="field-label" for="teacher-unrooted-algorithm">Placement</label><select id="teacher-unrooted-algorithm" class="full-input"><option value="equal-angle">Equal angle</option><option value="daylight">Daylight · bounded spacing improvement</option></select><div class="field-grid"><label>Display edge length (mm)<input id="teacher-unrooted-length" type="number" min="1" max="200" step="1" value="18"></label><label>Daylight passes<input id="teacher-unrooted-passes" type="number" min="0" max="12" step="1" value="6"></label><label>Rotation strength<input id="teacher-unrooted-strength" type="number" min="0" max="1" step=".1" value=".7"></label></div><label class="field-label" for="teacher-unrooted-origin">Display origin source ID (blank = balanced auto)</label><input id="teacher-unrooted-origin" class="full-input" placeholder="Automatic source vertex"><button id="teacher-unrooted-use-origin" class="button full-width">Use selected junction as display origin</button><p class="help">Changing origin regenerates geometry and may conflict with pins. Source splits are preserved. Daylight has a fixed work limit; it never shrinks labels or removes tips.</p></section>
+          <section id="teacher-class-controls" hidden><h2>Classification ranks</h2><p id="teacher-class-authority" class="help"></p><label class="field-label" for="teacher-rank-order">Rank policy, broad → specific (one per line)</label><textarea id="teacher-rank-order" class="full-input" rows="4">domain
+kingdom
+phylum
+class
+order
+family
+genus
+species</textarea><p class="help">This editable order is a drawing policy, not detected source data. Confirm it against your framework. Absent ranks stay absent.</p><label class="field-label" for="teacher-class-evidence">Evidence for rank assignments</label><textarea id="teacher-class-evidence" class="full-input" rows="3" maxlength="5000" placeholder="Source/version and where it supplies these ranks; identify invented data explicitly."></textarea><label class="field-label" for="teacher-class-refs">Rank citation IDs</label><input id="teacher-class-refs" class="full-input"><label class="field-label" for="teacher-ranks">Source node → rank records (JSON)</label><textarea id="teacher-ranks" class="full-input" rows="5" spellcheck="false">{}</textarea><p class="help">Use exact source IDs and policy names. Null means explicitly unranked; omit an ID for unknown rank. You can also select a junction and assign its rank below. Unknown/unranked nodes get disclosed spacing positions, never an invented rank. Source lengths are ignored. Classification groups are membership, not ancestors; MRCA is unavailable.</p></section>
+          <section id="teacher-metric-controls" hidden><h2>Source distance scale</h2><label class="field-label" for="teacher-measure-meaning">Meaning of source branch lengths</label><select id="teacher-measure-meaning" class="full-input"><option value="">Choose documented meaning…</option><option value="substitutions-per-site">Expected substitutions per site</option><option value="expected-changes">Expected changes</option><option value="other-distance">Other documented distance (no time inference)</option></select><label class="field-label" for="teacher-measure-unit">Unit</label><input id="teacher-measure-unit" class="full-input" maxlength="100"><label class="field-label" for="teacher-measure-evidence">Evidence for this source's units</label><textarea id="teacher-measure-evidence" class="full-input" rows="4" maxlength="5000" placeholder="Where does the source define these units? For invented data, say so explicitly."></textarea><label class="field-label" for="teacher-measure-refs">Evidence citation IDs</label><input id="teacher-measure-refs" class="full-input" placeholder="Source citations from Scientific basis"><div class="field-grid"><label>mm per source unit<input id="teacher-metric-scale" type="number" min=".000001" max="1000000" step="any" value="30"></label><label>Scale-bar value<input id="teacher-scale-bar" type="number" min=".000001" max="1000000000000" step="any" value="1"></label></div><p class="help">Terminals stop at their actual source distances. The radial inner gap and shared connectors carry no distance. Outer radius is unused. Depth is locked; use across-clade or label adjustments. Change scale/page dimensions explicitly and print at 100% to preserve physical size. Missing or invalid displayed path lengths block this view.</p></section>
+          <label class="field-label" for="teacher-kind">Drawing</label><select id="teacher-kind" class="full-input"><option value="rectangular">Rectangular</option><option value="circular">Circular / concentric</option><option value="fan">Open fan</option></select>
+          <div class="field-grid"><label>Width, mm<input id="teacher-width" type="number" min="20" max="2000" value="297"></label><label>Height, mm<input id="teacher-height" type="number" min="20" max="2000" value="210"></label></div>
+          <div class="field-grid"><label>Margin, mm<input id="teacher-margin" type="number" min="0" max="500" value="12"></label><label>Stroke, mm<input id="teacher-stroke" type="number" min=".01" max="10" step=".05" value=".3"></label></div>
+          <div class="field-grid"><label>Font size, pt<input id="teacher-font-size" type="number" min="4" max="72" value="10"></label><label>Font<select id="teacher-font"><option value="sans-serif">Sans serif</option><option value="serif">Serif</option><option value="monospace">Monospace</option></select></label></div>
+          <div class="field-grid"><label>Label gap, mm<input id="teacher-label-gap" type="number" min="0" max="100" step=".5" value="2"></label><label>Terminal gap, mm<input id="teacher-tip-gap" type="number" min="0" max="100" step=".5" value="1.5"></label></div>
+          <div class="field-grid"><label>Inner radius, mm<input id="teacher-inner" type="number" min="0" max="1000" value="8"></label><label>Outer radius, mm<input id="teacher-outer" type="number" min=".01" max="1000" value="65"></label></div>
+          <div class="field-grid"><label>Start angle, °<input id="teacher-start" type="number" value="-90"></label><label>Fan sweep, °<input id="teacher-sweep" type="number" min=".01" max="360" value="300"></label></div>
+          <div class="field-grid"><label>Orientation, °<input id="teacher-orientation" type="number" value="0"></label><label>Labels<select id="teacher-label-placement"><option value="radial">Radial, upright</option><option value="horizontal">Horizontal</option><option value="tangential">Tangential, upright</option></select></label></div>
+          <label class="check-row"><input id="teacher-curves" type="checkbox" checked> Allow curved junction connectors</label>
+          <p class="help">Turning curves off uses straight subdivisions of arcs, with the same tolerance in the canvas, SVG and checks. Text is never silently shrunk to fit.</p>
+          <div id="teacher-readability-controls"><h2>Readability</h2><label class="field-label" for="teacher-page-policy">Page size for readability preview</label><select id="teacher-page-policy" class="full-input"><option value="grow-page">Allow a larger page</option><option value="keep-page">Keep current page size</option></select><p class="help">Try more space using the measured labels. Font size, selected taxa, manual offsets and source relationships stay fixed. Pins can prevent a spacing change. A larger drawing must be printed at its stated size to retain readability.</p><button id="teacher-readability" class="button full-width">Preview readability</button></div>
+          <div class="button-row"><button id="teacher-preview" class="button primary">Preview layout</button><button id="teacher-cancel" class="button" hidden>Cancel / discard</button></div>
+          <button id="teacher-accept" class="button primary full-width" hidden>Use layout</button>
+          </div><button id="teacher-show-all" class="button full-width">Show full drawing</button><div class="structured-only"><button id="teacher-artistic-copy" class="button full-width">Create artistic copy</button><p class="help">Keeps the original structured view and copies its tree geometry, source paths, labels and pins into a separate free-placement view. A phylogram copy removes its calibrated scale guide and quantitative claim. A classification copy removes active rank positioning and retains its origin records.</p>
+          </div><section id="artist-controls" hidden><h2>Artistic copy</h2><button id="artist-font" class="button full-width">Remeasure artistic labels</button><button id="artist-rename" class="button full-width">Rename artistic copy</button><p class="help">Drag shared junctions or terminal labels. Square handles edit stem waypoints. Moving a connector updates its attached stems; branches keep their source relationships. Every completed drag is one undoable edit. Existing Organic fitting/border tools remain separate.</p><label class="check-row"><input id="artist-subtree" type="checkbox"> <span id="artist-subtree-label">Move selected clades with all displayed descendants</span></label><div class="field-grid"><label>Move X, mm<input id="artist-dx" type="number" step=".5" value="1"></label><label>Move Y, mm<input id="artist-dy" type="number" step=".5" value="0"></label></div><button id="artist-move" class="button full-width">Move selected junctions</button><label class="field-label" for="artist-points">Selected stem waypoints, X,Y mm per line</label><textarea id="artist-points" class="full-input" rows="3" placeholder="120, 80"></textarea><button id="artist-waypoints" class="button full-width">Apply stem waypoints</button><label class="field-label" for="artist-stroke">Artistic stroke, mm</label><input id="artist-stroke" class="full-input" type="number" min=".01" max="10" step=".05" value=".3"><label class="check-row"><input id="artist-curves" type="checkbox" checked> Allow original curved connectors</label><button id="artist-appearance" class="button full-width">Apply artistic line appearance</button></section>
+          <div id="teacher-rank-edit" hidden><h2>Selected node's rank</h2><select id="teacher-rank-value" class="full-input"><option value="unknown">Unknown</option><option value="unranked">Explicitly unranked</option></select><button id="teacher-rank-apply" class="button full-width">Preview rank assignment</button></div><h2 id="teacher-edit-heading">Clades &amp; junctions</h2><p id="teacher-edit-help" class="help">Click a shared connector to select its ancestor. Shift-click adds another node. Changes below also use Preview → Use layout.</p>
+          <div class="button-row structured-only"><button id="teacher-collapse" class="button">Collapse</button><button id="teacher-expand" class="button">Expand</button><button id="teacher-reverse" class="button">Reverse children</button></div>
+          <div class="button-row structured-only"><button id="teacher-mrca" class="button">Highlight MRCA</button><button id="teacher-highlight" class="button">Highlight clade</button><button id="teacher-clear-highlight" class="button">Clear highlights</button></div>
+          <div class="button-row"><button id="teacher-pin" class="button">Pin junction</button><button id="teacher-pin-edge" class="button">Pin stem</button><button id="teacher-unpin" class="button">Unpin selected</button></div>
+          <div class="field-grid structured-only"><label>Junction depth offset<input id="teacher-depth-offset" type="number" min="-1" max="1" step=".01" value="0"></label><label>Across clade (mm / °)<input id="teacher-shift-offset" type="number" step=".1" value="0"></label></div>
+          <button id="teacher-adjust" class="button full-width structured-only">Preview junction adjustment</button>
+          <div class="field-grid"><label>Label X offset, mm<input id="teacher-label-x" type="number" min="-2000" max="2000" step=".1" value="0"></label><label>Label Y offset, mm<input id="teacher-label-y" type="number" min="-2000" max="2000" step=".1" value="0"></label></div><button id="teacher-label-adjust" class="button full-width">Preview label adjustment</button><h2>Validate &amp; export</h2><div id="teacher-summary" class="qa-summary" aria-live="polite"></div><p id="teacher-error" class="help note" role="alert" hidden></p>
+          <p class="help">Use Save project or Export package above after accepting. Exports record root assumptions, included/omitted taxa, original paths, measurements and Sources &amp; Methods. Scientific interpretation follows your supplied source and declared assumptions.</p>
+        </section>
+        <section id="panel-check" class="tool-panel" hidden>
+          <h2>Validation</h2><p class="help">Check the visible strokes at their actual dimensions. A scientific partition can pass while the artwork still needs refinement.</p>
+          <div class="field-grid"><label>Clearance, mm<input id="clearance" type="number" min="0" max="20" step=".1" value=".6"></label><label>Tolerance, mm<input id="tolerance" type="number" min=".001" max=".5" step=".005" value=".025"></label></div>
+          <div class="field-grid"><label>Junction radius, mm<input id="junction-radius" type="number" min=".05" max="10" step=".1" value="1"></label><label>mm / source unit<input id="length-scale" type="number" min=".001" max="10000" value="30"></label></div>
+          <button id="validate-btn" class="button primary full-width">Run geometry checks</button>
+          <label class="check-row"><input id="show-issues" type="checkbox" checked> Mark issues on canvas</label>
+          <div id="qa-summary" class="qa-summary"><p>No geometry check yet.</p></div><div id="issue-list" class="issue-list"></div>
+          <p class="help note">Contact is allowed only at a genuine shared junction, inside its stated radius. Artist review is a separate step.</p>
+        </section>
+      </div>
+      <div class="sidebar-footer"><span class="local-dot"></span>Your data stays in this browser<a href="/third-party-notices.html" target="_blank" rel="noopener">Sources &amp; licenses</a></div>
+    </aside>
+    <section class="canvas-area" aria-label="Tree editor">
+      <div class="canvas-toolbar"><div class="view-switch"><button id="organic-view" class="active">Organic</button><button id="scientific-view">Scientific</button><button id="structured-view">Layouts</button><button id="explore-view-btn">Explore</button></div><span class="canvas-context" id="canvas-context">Editable arrangement</span><div class="toolbar-right"><button id="undo-btn" class="icon-button" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button><button id="redo-btn" class="icon-button" title="Redo (Ctrl+Shift+Z)" aria-label="Redo">↷</button><span class="toolbar-divider"></span><button id="fit-btn" class="button compact">Fit</button></div></div>
+      <div id="stage" class="stage" tabindex="0" aria-label="Interactive tree canvas. Select a junction to inspect and edit it."><svg id="canvas" xmlns="http://www.w3.org/2000/svg" aria-label="Phylogenetic tree" role="img"></svg><div id="fit-preview-banner" class="fit-preview-banner" hidden><span id="fit-preview-caption">Fit preview · blue marks show moved junctions</span><button id="accept-fit" class="button primary compact">Use fit</button><button id="discard-fit" class="button compact">Discard</button></div><div id="design-mode-hint" class="design-mode-hint" hidden></div><div class="loading" id="loading">Preparing your tree…</div></div>
+      <div class="canvas-bottom"><span><span class="draft-dot"></span><span id="draft-status">DRAFT · Geometry unchecked</span></span><span id="page-size">90 × 220 mm</span><span id="zoom-label">Fit to view</span></div>
+      <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+    </section>
+    <aside class="sidebar inspector"><div class="panel-heading"><span class="eyebrow">INSPECTOR</span><span id="selection-count" class="count-tag">0</span></div><div id="inspector-content" class="panel-scroll"><div class="empty-state"><span class="empty-icon">⌁</span><h2>Every line has a lineage.</h2><p>Select a branch or junction to inspect its source, adjust its detail, or shape its curve.</p></div></div><div class="inspector-footer"><span>SCIENTIFIC CONNECTIVITY</span><strong>Preserved by construction ↗</strong><p>Geometry edits move points and handles. They preserve the supplied source relationships.</p></div></aside>
+  </main>
+  <dialog id="datasets-dialog" aria-labelledby="datasets-heading">
+    <div class="dialog-heading"><h2 id="datasets-heading">Offline datasets</h2><button id="close-datasets" class="icon-button" aria-label="Close dataset chooser">×</button></div>
+    <p>Choose a scientific source for a new project. All trees listed here are bundled locally.</p>
+    <label class="field-label" for="dataset-choice">Source dataset</label><select id="dataset-choice" class="full-input"></select>
+    <div id="dataset-detail"></div>
+    <p>Large sources open as up to 100 collapsed groups. All original tips remain available for local search and selection. Use Layout for a nonmetric circular, fan or rectangular design.</p>
+    <p>Opening replaces the current canvas. If it has unsaved edits, a backup project download is requested before replacement.</p>
+    <button id="open-dataset" class="button primary">Open dataset</button>
+  </dialog>
+  <dialog id="source-dialog"><div class="dialog-heading"><h2>Source & provenance</h2><button id="close-source" class="icon-button" aria-label="Close source information">×</button></div><div id="source-detail"></div></dialog>
+  <dialog id="basis-dialog" aria-labelledby="basis-heading">
+    <div class="dialog-heading"><h2 id="basis-heading">Scientific basis</h2><button id="close-basis" class="icon-button" aria-label="Close scientific basis">×</button></div>
+    <form id="basis-form" class="basis-form">
+      <p>Describe the evidence and meaning of this input tree. To use another topology, import it and save a separate project.</p>
+      <label>Basis name<input id="basis-name" required maxlength="500"></label>
+      <div class="field-grid"><label>What should connections mean?<select id="basis-relationship"><option value="unspecified">Unspecified</option><option value="phylogeny">Inferred evolutionary relationships</option><option value="classification">Classification / supplied hierarchy</option><option value="similarity" disabled>Similarity — unsupported</option><option value="ecological-interaction" disabled>Ecological interaction — unsupported</option></select></label><label>What do entities represent?<select id="basis-entity"><option value="unspecified">Unspecified</option><option value="taxon-concepts">Taxon concepts / sampled organisms</option><option value="specimens">Specimens</option><option value="populations">Populations</option><option value="genes-sequences">Genes / sequences</option></select></label></div>
+      <label>Question addressed<textarea id="basis-question" maxlength="10000" rows="2"></textarea></label>
+      <label>Meaning of an edge<textarea id="basis-edges" maxlength="10000" rows="2"></textarea></label>
+      <label>Evidence used by the source<textarea id="basis-evidence" maxlength="10000" rows="3" placeholder="Markers, genomes, morphological characters, or other supplied evidence"></textarea></label>
+      <div class="field-grid"><label>Source / framework (if known)<input id="basis-provider" maxlength="500"></label><label>Dataset release / version<input id="basis-release" maxlength="500"></label></div>
+      <div class="field-grid"><label>Retrieval date (if known)<input id="basis-retrieved" type="date"></label><label>Evidence status<select id="basis-status"><option value="unspecified">Unspecified</option><option value="published-hypothesis">Published hypothesis</option><option value="classification-release">Classification release</option><option value="historical-model">Historical model</option><option value="teaching-example">Hypothetical example</option></select></label></div>
+      <label>Uncertainty and limitations<textarea id="basis-limitations" maxlength="10000" rows="3"></textarea></label>
+      <details><summary>Add or replace a supporting source citation</summary><p>Record the source actually used. User-supplied citations and license statements remain unverified. Leave the title blank to keep current citations.</p>
+        <label>Source title<input id="basis-ref-title" maxlength="1000"></label><label>Authors (separate with semicolons)<input id="basis-ref-authors" maxlength="2000"></label>
+        <div class="field-grid"><label>Publication year<input id="basis-ref-year" type="number" min="1" max="9999"></label><label>DOI<input id="basis-ref-doi" maxlength="500"></label></div>
+        <label>Source URL<input id="basis-ref-url" type="url" placeholder="https://…" maxlength="2000"></label><label>License / rights statement, if supplied<input id="basis-ref-license" maxlength="2000"></label>
+        <label class="check-row"><input id="basis-replace-ref" type="checkbox"> Replace earlier user-entered basis citations (original source attribution is retained)</label>
+      </details>
+      <p id="basis-identity" class="help note"></p><p id="basis-capabilities" class="help note"></p>
+      <p>Recording a scientific basis describes the existing input. It does not perform inference or download provider data. Unknown data rights remain unknown.</p>
+      <p id="basis-error" role="alert" hidden></p><button id="save-basis" type="submit" class="button primary">Save scientific basis</button>
+    </form>
+  </dialog>
+</body>
+</html>

@@ -1,0 +1,270 @@
+{
+  "format": "clade-component-review",
+  "version": 1,
+  "reviewedAt": "2026-11-04",
+  "policy": "Use 0BSD for original software; preserve only the component-specific obligations applicable to included third-party material. No public release authorized by this local build.",
+  "reviewedDependencyLockSha256": "14b9596970cb3a73a8bfd2c01c8e34f978ba113a8945f2cc0e9ba900a718923a",
+  "components": [
+    {
+      "id": "clade-original",
+      "name": "Clade Studio original software and documentation",
+      "role": "original-software",
+      "decision": "include",
+      "licenseExpression": "0BSD",
+      "licenseUrl": "https://opensource.org/license/0bsd",
+      "evidence": [
+        "User instruction: publish as openly as possible, adding no restrictions beyond third-party requirements, 2026-10-28.",
+        "LICENSE",
+        "M1a: original projection/compound-scene/cluster implementation and synthetic fixtures. External cluster/paper sources are cited as conceptual inspiration only; no upstream implementation, article text or figure is bundled.",
+        "M2: original cumulative-distance phylogram implementation. Paradis (2024) ape vignette cited as background only; no R/ape code, document, figures or dependency included. Hug branch-unit evidence refers to its Figure 2 legend and exact bundled Newick source.",
+        "M3a: original rank-policy and classification-parent implementation; NCBI taxonomy citation guidance is background only, with no NCBI dataset, implementation or document bundled. Synthetic classification sample is original 0BSD.",
+        "M3b: original unrooted projection, equal-angle construction and bounded daylight heuristic. Yu author documentation is cited for algorithm concepts only; no upstream software, document text, figures, fonts or new dataset are included.",
+        "Scope correction: offline local-file search only; original text normalization and pagination. No external provider, name dictionary, runtime package or dataset added.",
+        "Local workflow completion: original import staging and offline authoring guide; no new external code, data, fonts or services.",
+        "Offline dataset library: original chooser, exact-hash metadata, exhaustive bounded overview, protected citations and source-dependent header. Upstream tree data separately reviewed below; no new runtime dependency or online service.",
+        "Adaptive Explore: original compact source index, stable nonmetric geometry, viewport detail selection and SVG rendering. OneZoom/Taxonium papers are conceptual background only; no upstream code, document, figure, dependency or new data included.",
+        "First-release preparation: original changelog, maintainer release instructions and v0.1.0 release notes. Selected UI screenshots are repository documentation only; browser/source release archives remain image-free."
+      ],
+      "obligations": [],
+      "files": [
+        ".gitignore",
+        "CHANGELOG.md",
+        "LICENSE",
+        "REDISTRIBUTION.md",
+        "data/datasets/audit.json",
+        "docs/RELEASING.md",
+        "package-lock.json",
+        "package.json",
+        "public/guide.html",
+        "public/index.html",
+        "public/project-v2.schema.json",
+        "public/project-v3.schema.json",
+        "public/project-v4.schema.json",
+        "public/style.css",
+        "public/third-party-notices.html",
+        "release/SOURCE_README.md",
+        "release/components.json",
+        "release/v0.1.0.md",
+        "src/app.ts",
+        "src/commands.ts",
+        "src/datasets.ts",
+        "src/demo.ts",
+        "src/design.ts",
+        "src/explore/index.ts",
+        "src/explore/render.ts",
+        "src/explore/ui.ts",
+        "src/explore/worker.ts",
+        "src/export-provenance.ts",
+        "src/export.ts",
+        "src/fit-settings.ts",
+        "src/fitting.ts",
+        "src/geometry.ts",
+        "src/import.ts",
+        "src/model/basis.ts",
+        "src/model/document.ts",
+        "src/model/semantics.ts",
+        "src/newick.ts",
+        "src/project-v2.ts",
+        "src/project.ts",
+        "src/provenance/identity.ts",
+        "src/provenance/operations.ts",
+        "src/provenance/registry.ts",
+        "src/provenance/sync-identity.ts",
+        "src/routing.ts",
+        "src/science.ts",
+        "src/search.ts",
+        "src/structured/artistic.ts",
+        "src/structured/classification.ts",
+        "src/structured/coordinates.ts",
+        "src/structured/example.ts",
+        "src/structured/export.ts",
+        "src/structured/layout.ts",
+        "src/structured/metric.ts",
+        "src/structured/projection.ts",
+        "src/structured/readability.ts",
+        "src/structured/render.ts",
+        "src/structured/types.ts",
+        "src/structured/ui.ts",
+        "src/structured/unrooted.ts",
+        "src/structured/validate.ts",
+        "src/structured/view.ts",
+        "src/types.ts",
+        "src/worker.ts",
+        "tests/artistic-copy.test.ts",
+        "tests/classification.test.ts",
+        "tests/datasets.test.ts",
+        "tests/design.test.ts",
+        "tests/distribution.test.mjs",
+        "tests/editor.test.ts",
+        "tests/explore.test.ts",
+        "tests/fitting.test.ts",
+        "tests/fixtures/scientific-basis-v2.json",
+        "tests/fixtures/structured-v3.json",
+        "tests/identity.test.ts",
+        "tests/import.test.ts",
+        "tests/metric.test.ts",
+        "tests/project-v2.test.ts",
+        "tests/readability.test.ts",
+        "tests/release.test.mjs",
+        "tests/schema-check.ts",
+        "tests/science.test.ts",
+        "tests/search.test.ts",
+        "tests/structured.test.ts",
+        "tests/unrooted.test.ts",
+        "tools/benchmark-structured.ts",
+        "tools/build.mjs",
+        "tools/distribution-policy.mjs",
+        "tools/export-example.ts",
+        "tools/export-structured-example.ts",
+        "tools/prepare-datasets.py",
+        "tools/release-manifest.mjs",
+        "tools/release.mjs",
+        "tools/serve.mjs",
+        "tsconfig.json"
+      ]
+    },
+    {
+      "id": "hug-2016-source",
+      "name": "Hug et al. 2016 Supplementary Dataset 2",
+      "role": "third-party-data",
+      "decision": "include",
+      "licenseExpression": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "rightsHolder": "Hug et al.; subject to separately credited third-party rights",
+      "evidence": [
+        "https://www.nature.com/articles/nmicrobiol201648",
+        "https://support.springernature.com/en/support/solutions/articles/6000080095-author-copyrights-information"
+      ],
+      "reviewedAt": "2026-10-28",
+      "reuseBasis": "Publisher license for the work; no separate supplement restriction found. No separate written supplement confirmation obtained.",
+      "attribution": "Hug LA et al. A new view of the tree of life. Nature Microbiology 1, 16048 (2016). DOI 10.1038/nmicrobiol.2016.48. Supplementary Dataset 2.",
+      "changes": "Exact source bytes unchanged. Derived exports may apply declared rooting, reduction, label corrections and drawing geometry.",
+      "obligations": [
+        "Retain attribution, source and license links and supplied relevant notices.",
+        "Indicate modifications and retain earlier modification notices.",
+        "Do not imply endorsement or impose restrictions that prevent exercise of the licensed rights.",
+        "Observe any separately identified third-party exceptions."
+      ],
+      "files": [
+        "data/source_tree.nwk"
+      ],
+      "sha256": {
+        "data/source_tree.nwk": "9829bbe7c058d7807c10fa63f7e6977087206e4355b60162ece4a45086540c61"
+      }
+    },
+    {
+      "id": "clade-source-metadata",
+      "name": "Source provenance, annotation review, reduction recipe and source-derived audit",
+      "role": "mixed-source-metadata",
+      "decision": "include",
+      "licenseExpression": "0BSD AND CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "scope": "0BSD for original application additions; CC BY requirements remain with protected upstream content if applicable. This expression does not license factual information that is not subject to such rights.",
+      "evidence": [
+        "LICENSE",
+        "https://www.nature.com/articles/nmicrobiol201648"
+      ],
+      "obligations": [
+        "Retain the Hug data attribution and identify source-derived content and application changes where applicable."
+      ],
+      "files": [
+        "data/annotation_review.json",
+        "data/example_reduction_recipe.json",
+        "data/source_manifest.json",
+        "reports/source_audit.json"
+      ]
+    },
+    {
+      "id": "upham-2019-source",
+      "name": "Upham et al. 2019 global ML mammal tree (S3)",
+      "role": "third-party-data",
+      "decision": "include",
+      "licenseExpression": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "reviewedAt": "2026-10-28",
+      "evidence": [
+        "https://datadryad.org/api/v2/datasets/doi%3A10.5061%2Fdryad.tb03d03",
+        "https://datadryad.org/api/v2/versions/42771/files",
+        "https://zenodo.org/records/4991999"
+      ],
+      "reuseBasis": "Explicit data license; selected original tree data only. Archive checksums and extraction details in data/datasets/audit.json.",
+      "attribution": "Upham NS, Esselstyn JA, Jetz W (2019). DOI 10.1371/journal.pbio.3000494. Dataset DOI 10.5061/dryad.tb03d03 version 4; S3 global ML tree.",
+      "changes": "Exact extracted Newick entry bytes unchanged.",
+      "obligations": [],
+      "files": [
+        "data/datasets/upham-2019.nwk"
+      ],
+      "sha256": {
+        "data/datasets/upham-2019.nwk": "ce83e9ce7d255cd135c678a210bc4da9390c78da67ac46f35f66baa1233c6d4f"
+      }
+    },
+    {
+      "id": "dos-reis-2018-source",
+      "name": "dos Reis et al. 2018 primate topology",
+      "role": "third-party-data",
+      "decision": "include",
+      "licenseExpression": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "reviewedAt": "2026-10-28",
+      "evidence": [
+        "https://datadryad.org/api/v2/datasets/doi%3A10.5061%2Fdryad.c020q",
+        "https://datadryad.org/api/v2/versions/21401/files",
+        "https://zenodo.org/records/4995538"
+      ],
+      "reuseBasis": "Explicit data license; selected original tree data only. Archive checksums and extraction details in data/datasets/audit.json.",
+      "attribution": "dos Reis M, Gunnell GF, Barba-Montoya J, Wilkins A, Yang Z, Yoder AD (2018). DOI 10.1093/sysbio/syy001. Dataset DOI 10.5061/dryad.c020q version 1; timetrees/372s-sA-AR-fig.tree.",
+      "changes": "NEXUS envelope removed; one Newick body with labels, length tokens and bracket annotations retained verbatim, newline appended. Nonmetric default; no dated-tree analysis.",
+      "obligations": [],
+      "files": [
+        "data/datasets/dos-reis-2018.nwk"
+      ],
+      "sha256": {
+        "data/datasets/dos-reis-2018.nwk": "741fdf949b5a339cb9acb381f9277ae05167cd0ba3528ce666e9e15160ae9971"
+      }
+    },
+    {
+      "id": "kew-4-source",
+      "name": "Kew Tree of Life Explorer release 4.0 trees",
+      "role": "third-party-data",
+      "decision": "include",
+      "licenseExpression": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "reviewedAt": "2026-10-28",
+      "evidence": [
+        "https://treeoflife.kew.org/data-access",
+        "https://treeoflife.kew.org/cite-us",
+        "https://sftp.kew.org/pub/paftol/releases/4.0/kew_tree_of_life_release_notes_4.0.txt"
+      ],
+      "reuseBasis": "Explicit data license; selected original tree data only. Archive checksums and extraction details in data/datasets/audit.json.",
+      "attribution": "Royal Botanic Gardens, Kew and collaborators. Kew Tree of Life Explorer release 4.0 (April 2026). Baker WJ et al. (2022), A Comprehensive Phylogenomic Platform for Exploring the Angiosperm Tree of Life. DOI 10.1093/sysbio/syab035.",
+      "changes": "Exact source bytes unchanged. Software opening creates recorded collapsed overview groups; later selection, reduction and artwork are recorded separately.",
+      "obligations": [
+        "Retain credit, source and license links and relevant notices.",
+        "Identify modifications; do not imply endorsement.",
+        "Apply no additional restrictions to exercise of the licensed data rights."
+      ],
+      "files": [
+        "data/datasets/kew-4-order.nwk",
+        "data/datasets/kew-4-family.nwk",
+        "data/datasets/kew-4-species.nwk"
+      ],
+      "sha256": {
+        "data/datasets/kew-4-order.nwk": "4338a16ff2599cad74f0c1be5d9bb1c821b015dbcb42330e3d85d1e1a14adcd0",
+        "data/datasets/kew-4-family.nwk": "1d520c07218df84df2858e349efc2c6f517253a0c63f2549257e657ccd84176e",
+        "data/datasets/kew-4-species.nwk": "ff2cdf88a6f46da1f4155b36a4d9a96a838d415f9d609b8c8a284019f6e11b20"
+      }
+    }
+  ],
+  "excludedFiles": [
+    "tools/audit_source.py",
+    "tools/verify_with_biopython.py"
+  ],
+  "excludedMaterial": [
+    "All supplied reference pictures and research PDFs",
+    "Private user projects, screenshots, outputs and workspace history",
+    "Unused accession table and unneeded research documents",
+    "Node.js/browser executables and node_modules packages",
+    "Optional Biopython checks and the Biopython package",
+    "D3/ggtree/iTOL implementations, fonts, publisher article text/figures and future provider datasets (not bundled; conceptual methods are cited only)"
+  ]
+}

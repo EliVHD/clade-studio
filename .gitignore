@@ -1,0 +1,26 @@
+node_modules/
+dist/
+outputs/
+*.treeproject.json
+private/
+references/*.png
+references/*.jpg
+references/*.jpeg
+references/*.webp
+data/*.pdf
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+.aws/
+.codex/
+.agents/
+
+# Editor, OS and build-cache files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
+*.tsbuildinfo

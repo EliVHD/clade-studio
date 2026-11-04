@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Local authoring guide — Clade Studio</title>
+<style>
+:root{font-family:system-ui,sans-serif;color:#253c31;background:#f4f6f0;line-height:1.65}body{max-width:960px;margin:0 auto;padding:32px 24px 64px}a{color:#285e47;text-underline-offset:3px}header{display:flex;justify-content:space-between;gap:20px;align-items:center;border-bottom:1px solid #ccd5cb;padding-bottom:16px}h1,h2{line-height:1.2}h1{font-size:clamp(28px,5vw,42px);font-weight:550;margin:32px 0 12px}h2{font-size:23px;margin-top:36px}p{max-width:76ch}nav{display:flex;gap:18px;flex-wrap:wrap;margin:24px 0}.intro{font-size:19px;max-width:64ch}.card{padding:20px 24px;border:1px solid #d6ded2;background:#fff;border-radius:8px;margin:22px 0}table{width:100%;border-collapse:collapse;background:white}td,th{padding:12px;text-align:left;vertical-align:top;border-bottom:1px solid #d6ded2}th{background:#e8eee3}code{background:#e8eee3;padding:2px 5px;overflow-wrap:anywhere}li{margin:8px 0}.table-scroll{overflow-x:auto}small{color:#596c5e}a:focus-visible{outline:3px solid #497c60;outline-offset:4px}@media(max-width:560px){body{padding:20px 14px}td,th{padding:9px}.card{padding:16px}}@media print{body{background:white;padding:0}nav,.back{display:none}header{display:block}h2{break-after:avoid}.card,tr{break-inside:avoid}}
+</style>
+</head>
+<body>
+<header><strong>Clade Studio · Local authoring guide</strong><a class="back" href="/">Open editor</a></header>
+<main>
+<h1>From your data to your drawing.</h1>
+<p class="intro">Import a relation tree, search its organisms or groups, arrange the branches and export your design with its sources.</p>
+<nav aria-label="Guide sections"><a href="#import">Import</a><a href="#search">Search</a><a href="#explore">Explore</a><a href="#layout">Choose a layout</a><a href="#refine">Refine</a><a href="#export">Save &amp; export</a><a href="#troubleshoot">Troubleshoot</a></nav>
+<section id="import"><h2>Choose an offline dataset</h2>
+<p>Open <strong>Datasets</strong> in the header for the Hug tree of life, Upham mammals, dos Reis primates, and Kew release 4.0 plant trees. All are bundled locally. Kew offers order, family and sampled-species sources; these include gymnosperm outgroups. Large trees open as up to 100 collapsed overview groups with every original tip retained. Search the full source in Reduce or Layout, select the taxa needed, and choose a layout. Opening another source requests a backup download when the current canvas has unsaved changes.</p>
+<p>The header follows the selected source. Scientific basis and Source &amp; provenance show its release, evidence, limitations and reuse terms. New library trees open without a calibrated scale. Raw dated primate values are preserved without interpreting them as substitution units. Tree exports retain source-specific citations and data notices.</p>
+<h2>1. Import your tree</h2>
+<p>Use <strong>Open file</strong> for a Newick tree (<code>.nwk</code>, <code>.newick</code>, <code>.tree</code> or <code>.txt</code>), a saved Clade Studio project (<code>.json</code>) or a reduction recipe for the current source.</p>
+<p>Newick describes the actual connections, not just a list of names. For example, <code>((A,B),C);</code> supplies a group containing A and B, connected with C. This is an invented example, not a statement about organisms. The tool does not look up or infer missing relationships.</p>
+<p>The file is checked before replacing the current project. Finish or discard an outstanding preview before importing. If the current project has unsaved changes, a <code>before-import.treeproject.json</code> backup download is requested before switching. Keep that file; the app has no persistent autosave or cloud storage. A rejected import leaves the current document in place.</p>
+<p>After importing, open <strong>Scientific basis · Edit</strong> below the title. Describe what the supplied connections mean and record the source or your own hierarchy's name/version. Citations describe the data you supplied; no service is contacted. Source text and original IDs stay intact.</p>
+</section>
+<section id="search"><h2>2. Search and select</h2>
+<p><strong>Reduce → Search imported data</strong> finds organisms/endpoints and named groups anywhere in the source, including hidden nodes. Select a result to inspect it, then use Reveal or Expand if needed.</p>
+<p><strong>Layout → search</strong> finds individual source endpoints and adds their exact IDs to your selection. Use a selected clade's source tips for a whole group where that operation is available. Search results have Previous/Next pages; text matching ignores case and treats underscores as spaces.</p>
+<p>Original and corrected display names are searchable. Identical names keep separate IDs: a text match does not merge organisms or establish that two records describe the same entity. If a name is absent from the file, import data containing it. Search does not use online databases or synonym resolution.</p>
+</section>
+<section id="explore"><h2>Explore the complete source</h2>
+<p>Choose <strong>Explore</strong> above the editor canvas to inspect the full current input in a separate read-only rectangular, circular or fan view. Zoom reveals original junctions and labels; shaded groups summarize exactly the stated number of source tips. These automatic groups are temporary display summaries, not changes to the saved reduction or new taxa. Spacing is nonmetric.</p>
+<p>Scroll to zoom at the pointer, drag to pan, or use the +/− and Home / fit buttons. Click a junction or summary to inspect its exact source ID and unmodified labels, length tokens and annotations. Double-click to focus. Search covers every source identity, including duplicate names on separate results and tips hidden in the editor. <strong>Inspect parent junction</strong> follows the original traversal path; its visible segments are highlighted. Keyboard arrows pan, +/− zoom, Home fits and Enter focuses selection.</p>
+<p>Return with <strong>← Editor</strong> to the same artwork, camera, selection, pins, QA and undo state. Explore navigation does not mark the project unsaved. Save and export remain editor actions and use accepted artwork. Explorer camera/detail state is not saved. Changing the source cancels obsolete viewer work.</p>
+<p>The viewer supports up to 100,000 nodes within the existing 800-level / 20 MB Newick import limits. It draws at most 1,800 nodes/groups and 160 labels per frame, plus the selected source path. If a visible polytomy exceeds this budget, the complete group remains summarized; zoom or search to reach any sibling. No children are sampled or invented. The status separates source tips covered by displayed groups from tips outside those groups. A summary can extend beyond the viewport.</p>
+<p>Classification retains supplied parent links and membership semantics. An unspecified or unrooted source uses a clearly disclosed traversal for inspection; this is not an adaptive unrooted embedding or a new ancestry claim. Branch lengths, dates, numeric internal labels and support annotations are not inferred or reinterpreted.</p>
+</section>
+<section id="layout"><h2>3. Choose the meaning, then the layout</h2>
+<div class="table-scroll"><table><thead><tr><th>What you want to draw</th><th>Choose</th><th>What to supply</th></tr></thead><tbody>
+<tr><td>Relationships with a declared biological root</td><td>Cladogram; rectangular, circular/concentric or fan</td><td>A phylogenetic basis and declared root. Spacing does not encode distance or time.</td></tr>
+<tr><td>A supplied grouping/classification hierarchy</td><td>Classification · supplied ranks</td><td>Classification basis, taxon concepts, framework or local hierarchy name, release and parent-link evidence. Supply ranks only if known; otherwise leave rank records empty and explain that they are unknown. No biological root is required.</td></tr>
+<tr><td>A phylogeny with no root direction shown</td><td>Unrooted; equal angle or daylight</td><td>A phylogenetic basis. Display origin is a placement choice, not an ancestor. Source branch lengths are ignored for spacing.</td></tr>
+<tr><td>Documented source branch distances</td><td>Phylogram</td><td>A declared root, units/evidence, physical scale and scale-bar value. Distance is not elapsed time.</td></tr>
+<tr><td>A freely shaped arrangement</td><td>Organic, or Create artistic copy from an accepted Layout view</td><td>The existing source connections. Free placement carries no calibrated distance or rank-position claim.</td></tr>
+</tbody></table></div>
+<p>In <strong>Layout</strong>, choose source tips, name the view and set page dimensions, text, stroke and spacing. Use <strong>Preview layout → Use layout</strong>, or discard the proposal. Save a separate view to keep alternatives. Layout changes preserve supplied connections and unresolved forks.</p>
+<p><strong>Scientific</strong> beside Organic is a normalized inspection, not an export design or a time/distance scale. Return to Organic or an accepted Layout view to export.</p>
+</section>
+<section id="refine"><h2>4. Refine the drawing</h2>
+<p>Click a junction or label to inspect its source. Pin geometry that should stay fixed; a conflicting regeneration requires explicit unpinning. Use Undo/Redo for accepted changes. Structured views support constrained adjustments; Create artistic copy enables free junction/label moves and stem waypoints while retaining the original view.</p>
+<p>For an organic silhouette, select endpoints and draw a border in <strong>Shape</strong>. Repeat for another selection and border. Set offsets/variation and direction, then use <strong>Fit → Preview automatic fit</strong>. Keep or discard it. Shape also accepts a local image with adjustable opacity for manual alignment. These Organic tools are separate from compound artistic copies.</p>
+<p>Line width and straight/curved controls belong to the current workspace. Quantitative layouts constrain the coordinate carrying distance; unrooted layouts use straight stems. Geometry bends are not new source nodes.</p>
+<p>For crowded cladograms, try <strong>Preview readability</strong> with a fixed or larger page. Font size and selected tips stay fixed. Click reported problems or Show full drawing to inspect overlaps and overflow.</p>
+</section>
+<section id="export"><h2>5. Save and export</h2>
+<p><strong>Save project</strong> downloads the editable project, including accepted views, source, provenance, pins and any editing image. Save before closing the tab. Projects from earlier supported versions preserve their artwork on import.</p>
+<p><strong>Export package</strong> downloads the active accepted design: labeled/unlabeled SVGs with identical branch artwork, an editable project, exact source/mappings, omissions, QA and Sources &amp; Methods with text/BibTeX references. Each file is listed in an artifact hash manifest. Print SVGs at their stated dimensions; the print sheet provides a 50 mm calibration line.</p>
+<p><strong>Checked</strong> means the implemented geometry/coverage checks passed. <strong>Draft</strong> identifies issues, unavailable font measurements or work limits. It does not mean the supplied relationships were authenticated. Drafts can be exported with their findings. Review the actual drawing before using it.</p>
+<p>Tree SVGs omit editing overlays, but the project included in a tree package retains them. Check the rights to your own data/images before sharing projects. Original software is 0BSD; bundled scientific data retain their separate terms. See <a href="/third-party-notices.html">Sources &amp; licenses</a>.</p>
+</section>
+<section id="troubleshoot"><h2>If something is unavailable</h2><ul>
+<li><strong>Preview cannot start:</strong> inspect the displayed reason. Supply the relationship meaning/root or the classification hierarchy information required by that mode.</li>
+<li><strong>Export is disabled:</strong> accept/discard the current preview, regenerate a stale view, or remeasure/regenerate if fonts differ. The Scientific inspection is not directly exportable.</li>
+<li><strong>An imported file is rejected:</strong> check its Newick syntax, source identity or project version. A single Newick tree is supported; a plain list, CSV spreadsheet, image or multi-tree container is not a relationship tree import.</li>
+<li><strong>A pin prevents a change:</strong> unpin it explicitly or save a separate view.</li>
+<li><strong>A label or branch is outside the page:</strong> Show full drawing, enlarge the page or adjust spacing/labels. Text is never silently shrunk.</li>
+<li><strong>Changes disappeared after closing:</strong> reopen your downloaded project or backup. There is no autosave; the browser tab alone is not a saved file.</li>
+</ul></section>
+<div class="card"><strong>A design tool with a local workflow.</strong><p>No accounts, online organism lookup, provider connections, automatic relationship inference, dating/fossil tools or trait analysis. Teachers create their own material; there are no pupil lessons or tasks.</p></div>
+</main><footer><small>Clade Studio · Original guide under 0BSD · <a href="/">Editor</a> · <a href="/third-party-notices.html">Sources &amp; licenses</a></small></footer>
+</body></html>

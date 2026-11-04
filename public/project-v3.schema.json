@@ -1,0 +1,1517 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Clade Studio project V3 \u2014 M0b scientific-basis profile",
+  "description": "One scientific basis per immutable imported tree. Runtime also verifies source/citation identity, geometry, basis capabilities, rights-record links, and provenance component digests. V1/V2 migrations preserve existing geometry and history; unsupported relationship/layout adapters remain unavailable.",
+  "type": "object",
+  "properties": {
+    "format": {
+      "const": "phylogenetic-tree-studio"
+    },
+    "version": {
+      "const": 3
+    },
+    "documentId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,150}$"
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 10000
+    },
+    "createdWith": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/build"
+        }
+      ]
+    },
+    "lastSavedWith": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/build"
+        }
+      ]
+    },
+    "sources": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/source"
+      },
+      "minProperties": 1,
+      "maxProperties": 1
+    },
+    "scientific": {
+      "$ref": "#/$defs/scientific"
+    },
+    "views": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/view"
+      },
+      "minProperties": 1,
+      "maxProperties": 32
+    },
+    "activeViewId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,150}$"
+    },
+    "provenance": {
+      "$ref": "#/$defs/provenance"
+    },
+    "compatibility": {
+      "$ref": "#/$defs/compatibility"
+    },
+    "ui": {
+      "type": "object",
+      "properties": {
+        "selection": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "selection"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "format",
+    "version",
+    "documentId",
+    "title",
+    "createdWith",
+    "lastSavedWith",
+    "sources",
+    "scientific",
+    "views",
+    "activeViewId",
+    "provenance",
+    "compatibility",
+    "ui"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "build": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "const": "clade-build-info"
+        },
+        "version": {
+          "const": 1
+        },
+        "appVersion": {
+          "type": "string"
+        },
+        "buildId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "manifest": {
+          "const": "build-manifest.json"
+        }
+      },
+      "required": [
+        "format",
+        "version",
+        "appVersion",
+        "buildId",
+        "manifest"
+      ],
+      "additionalProperties": false
+    },
+    "point": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "number",
+          "exclusiveMinimum": -10000,
+          "exclusiveMaximum": 10000
+        },
+        "y": {
+          "type": "number",
+          "exclusiveMinimum": -10000,
+          "exclusiveMaximum": 10000
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "additionalProperties": true
+    },
+    "traversal": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "node"
+            },
+            "sourceNodeId": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "sourceNodeId",
+            "status"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "edge"
+            },
+            "sourceEdge": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "fraction": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "exclusiveMaximum": 1
+            },
+            "status": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "sourceEdge",
+            "fraction",
+            "status"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "root": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "status": {
+              "const": "rooted"
+            },
+            "basis": {
+              "enum": [
+                "source-declared",
+                "curated",
+                "user-assumption",
+                "hypothetical"
+              ]
+            },
+            "explanation": {
+              "type": "string",
+              "minLength": 1
+            },
+            "referenceIds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "status",
+            "basis",
+            "explanation",
+            "referenceIds"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "status": {
+              "enum": [
+                "unrooted",
+                "unspecified"
+              ]
+            },
+            "explanation": {
+              "type": "string",
+              "minLength": 1
+            },
+            "referenceIds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "status",
+            "explanation",
+            "referenceIds"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "recipe": {
+      "type": "object",
+      "properties": {
+        "algorithm": {
+          "const": "maximal_frontier_v1"
+        },
+        "sourceSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "root": {
+          "$ref": "#/$defs/traversal"
+        },
+        "globalThreshold": {
+          "type": "number",
+          "minimum": 0
+        },
+        "thresholdOverrides": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sourceNodeId": {
+                "type": "string"
+              },
+              "threshold": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "sourceNodeId",
+              "threshold"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "protectOverridePaths": {
+          "const": true
+        },
+        "comparison": {
+          "const": "strict_less_than"
+        },
+        "protect": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "collapse": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "expand": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "resolvedFrontierSourceNodeIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "algorithm",
+        "sourceSha256",
+        "root",
+        "globalThreshold",
+        "thresholdOverrides",
+        "protectOverridePaths",
+        "comparison",
+        "protect",
+        "collapse",
+        "expand",
+        "resolvedFrontierSourceNodeIds"
+      ],
+      "additionalProperties": true
+    },
+    "layout": {
+      "type": "object",
+      "properties": {
+        "nodes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/point"
+          }
+        },
+        "routes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "segments": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "c1": {
+                      "$ref": "#/$defs/point"
+                    },
+                    "c2": {
+                      "$ref": "#/$defs/point"
+                    },
+                    "end": {
+                      "$ref": "#/$defs/point"
+                    }
+                  },
+                  "required": [
+                    "c1",
+                    "c2",
+                    "end"
+                  ],
+                  "additionalProperties": true
+                },
+                "minItems": 1,
+                "maxItems": 24
+              }
+            },
+            "required": [
+              "segments"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "pinnedNodes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "pinnedEdges": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "childOrder": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          }
+        },
+        "mode": {
+          "enum": [
+            "organic",
+            "scientific"
+          ]
+        },
+        "lineStyle": {
+          "enum": [
+            "curved",
+            "straight"
+          ]
+        }
+      },
+      "required": [
+        "nodes",
+        "routes",
+        "pinnedNodes",
+        "pinnedEdges",
+        "childOrder",
+        "mode"
+      ],
+      "additionalProperties": true
+    },
+    "appearance": {
+      "type": "object",
+      "properties": {
+        "widthMm": {
+          "type": "number",
+          "minimum": 20,
+          "maximum": 2000
+        },
+        "heightMm": {
+          "type": "number",
+          "minimum": 20,
+          "maximum": 2000
+        },
+        "strokeMm": {
+          "type": "number",
+          "minimum": 0.01,
+          "maximum": 10
+        },
+        "taper": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "clearanceMm": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 20
+        },
+        "toleranceMm": {
+          "type": "number",
+          "minimum": 0.001,
+          "maximum": 0.5
+        },
+        "junctionMm": {
+          "type": "number",
+          "minimum": 0.05,
+          "maximum": 10
+        },
+        "sourceUnitMm": {
+          "type": "number",
+          "minimum": 0.001,
+          "maximum": 10000
+        },
+        "labels": {
+          "type": "boolean"
+        },
+        "labelOffsets": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/point"
+          }
+        }
+      },
+      "required": [
+        "widthMm",
+        "heightMm",
+        "strokeMm",
+        "taper",
+        "clearanceMm",
+        "toleranceMm",
+        "junctionMm",
+        "sourceUnitMm",
+        "labels",
+        "labelOffsets"
+      ],
+      "additionalProperties": true
+    },
+    "direction": {
+      "type": "object",
+      "properties": {
+        "angleDeg": {
+          "type": "number"
+        },
+        "strength": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "angleDeg",
+        "strength"
+      ],
+      "additionalProperties": true
+    },
+    "border": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "points": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/point"
+          },
+          "minItems": 2,
+          "maxItems": 512
+        },
+        "closed": {
+          "type": "boolean"
+        },
+        "placement": {
+          "enum": [
+            "nearest",
+            "spread"
+          ]
+        },
+        "insetMm": {
+          "type": "number"
+        },
+        "variationMm": {
+          "type": "number"
+        },
+        "seed": {
+          "type": "integer"
+        },
+        "direction": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/direction"
+            }
+          ]
+        },
+        "assignments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sourceNodeId": {
+                "type": "string"
+              },
+              "fraction": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "normalSign": {
+                "enum": [
+                  -1,
+                  1
+                ]
+              }
+            },
+            "required": [
+              "sourceNodeId",
+              "fraction",
+              "normalSign"
+            ],
+            "additionalProperties": true
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "points",
+        "closed",
+        "placement",
+        "insetMm",
+        "variationMm",
+        "seed",
+        "assignments"
+      ],
+      "additionalProperties": true
+    },
+    "image": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "dataUrl": {
+          "type": "string",
+          "pattern": "^data:image/(png|jpeg|webp);base64,"
+        },
+        "pixelWidth": {
+          "type": "number"
+        },
+        "pixelHeight": {
+          "type": "number"
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "widthMm": {
+          "type": "number"
+        },
+        "heightMm": {
+          "type": "number"
+        },
+        "rotationDeg": {
+          "type": "number"
+        },
+        "opacity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "layer": {
+          "enum": [
+            "behind",
+            "above"
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "dataUrl",
+        "pixelWidth",
+        "pixelHeight",
+        "x",
+        "y",
+        "widthMm",
+        "heightMm",
+        "rotationDeg",
+        "opacity",
+        "visible",
+        "layer"
+      ],
+      "additionalProperties": true
+    },
+    "fit": {
+      "type": "object",
+      "properties": {
+        "algorithm": {
+          "const": "junction_fit_v1"
+        },
+        "borderScope": {
+          "enum": [
+            "all",
+            "active"
+          ]
+        },
+        "strength": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "junctionDepth": {
+          "type": "number"
+        },
+        "preserveFlow": {
+          "type": "number"
+        },
+        "junctionSpacingMm": {
+          "type": "number"
+        },
+        "smoothing": {
+          "type": "number"
+        },
+        "direction": {
+          "$ref": "#/$defs/direction"
+        },
+        "routing": {
+          "type": "number"
+        },
+        "forkSpread": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "algorithm",
+        "borderScope",
+        "strength",
+        "junctionDepth",
+        "preserveFlow",
+        "junctionSpacingMm",
+        "smoothing"
+      ],
+      "additionalProperties": true
+    },
+    "design": {
+      "type": "object",
+      "properties": {
+        "borders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/border"
+          }
+        },
+        "showBorders": {
+          "type": "boolean"
+        },
+        "activeBorderId": {
+          "type": "string"
+        },
+        "referenceImage": {
+          "$ref": "#/$defs/image"
+        },
+        "fitSettings": {
+          "$ref": "#/$defs/fit"
+        }
+      },
+      "required": [
+        "borders",
+        "showBorders"
+      ],
+      "additionalProperties": true
+    },
+    "view": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,150}$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "intent": {
+          "enum": [
+            "artistic",
+            "legacy-inspection"
+          ]
+        },
+        "adapter": {
+          "const": "legacy-artistic-v1"
+        },
+        "layout": {
+          "$ref": "#/$defs/layout"
+        },
+        "appearance": {
+          "$ref": "#/$defs/appearance"
+        },
+        "design": {
+          "$ref": "#/$defs/design"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "intent",
+        "adapter",
+        "layout",
+        "appearance"
+      ],
+      "additionalProperties": false
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "role": {
+          "const": "topology"
+        },
+        "mediaType": {
+          "const": "text/x-newick"
+        },
+        "content": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "hashBasis": {
+          "const": "legacy-utf8-text"
+        },
+        "referenceIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "metadataStatus": {
+          "enum": [
+            "curated",
+            "incomplete"
+          ]
+        },
+        "attribution": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "role",
+        "mediaType",
+        "content",
+        "sha256",
+        "hashBasis",
+        "referenceIds",
+        "metadataStatus",
+        "attribution"
+      ],
+      "additionalProperties": false
+    },
+    "reference": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "article",
+            "application-method",
+            "source"
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "authors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "year": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer"
+            }
+          ]
+        },
+        "doi": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^10\\.\\d{4,9}/[^\\s<>\"{}]+$"
+            }
+          ]
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^https?://"
+            }
+          ]
+        },
+        "license": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "verification": {
+          "enum": [
+            "verified-source",
+            "application-defined",
+            "unverified"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "title",
+        "authors",
+        "year",
+        "doi",
+        "url",
+        "license",
+        "verification"
+      ],
+      "additionalProperties": true
+    },
+    "referenceUse": {
+      "type": "object",
+      "properties": {
+        "referenceId": {
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "input-tree",
+            "algorithm",
+            "implementation",
+            "background"
+          ]
+        },
+        "relationship": {
+          "enum": [
+            "uses-data",
+            "implements",
+            "adapts",
+            "inspired-by",
+            "background"
+          ]
+        }
+      },
+      "required": [
+        "referenceId",
+        "role",
+        "relationship"
+      ],
+      "additionalProperties": true
+    },
+    "method": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "category": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "implemented",
+            "planned"
+          ]
+        },
+        "specification": {
+          "type": "string"
+        },
+        "specificationSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "parameterSchema": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "object"
+            },
+            "additionalProperties": {
+              "const": true
+            }
+          },
+          "required": [
+            "type",
+            "additionalProperties"
+          ],
+          "additionalProperties": false
+        },
+        "defaults": {
+          "type": "object"
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "referenceUses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/referenceUse"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "version",
+        "category",
+        "status",
+        "specification",
+        "specificationSha256",
+        "parameterSchema",
+        "defaults",
+        "limitations",
+        "referenceUses"
+      ],
+      "additionalProperties": true
+    },
+    "head": {
+      "type": "object",
+      "properties": {
+        "revision": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "operationId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "revision",
+        "operationId"
+      ],
+      "additionalProperties": true
+    },
+    "operation": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^operation-[0-9a-f]{64}$"
+        },
+        "kind": {
+          "enum": [
+            "migration",
+            "scientific",
+            "layout",
+            "manual",
+            "appearance",
+            "annotation",
+            "context"
+          ]
+        },
+        "methods": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "buildId": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "key",
+              "buildId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "scope": {
+          "type": "object",
+          "properties": {
+            "sourceId": {
+              "type": "string"
+            },
+            "viewId": {
+              "type": "string"
+            },
+            "components": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "sourceNodeIds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "sourceId",
+            "viewId",
+            "components",
+            "sourceNodeIds"
+          ],
+          "additionalProperties": false
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/head"
+          }
+        },
+        "outputs": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "parameters": {
+          "type": "object"
+        },
+        "referenceUses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/referenceUse"
+          }
+        },
+        "result": {
+          "type": "object"
+        },
+        "recordedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "methods",
+        "scope",
+        "inputs",
+        "outputs",
+        "parameters",
+        "referenceUses",
+        "result",
+        "recordedAt",
+        "notes"
+      ],
+      "additionalProperties": true
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "references": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/reference"
+          }
+        },
+        "methods": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/method"
+          }
+        },
+        "operations": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/operation"
+          },
+          "maxProperties": 20000
+        },
+        "heads": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/head"
+          }
+        },
+        "replayCoverage": {
+          "const": "source-and-final-geometry"
+        }
+      },
+      "required": [
+        "references",
+        "methods",
+        "operations",
+        "heads",
+        "replayCoverage"
+      ],
+      "additionalProperties": true
+    },
+    "correction": {
+      "type": "object",
+      "properties": {
+        "source_node_id": {
+          "type": "string"
+        },
+        "raw_label": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "display_taxonomy": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "evidence_url": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^https?://"
+            }
+          ]
+        },
+        "review_date": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_node_id",
+        "raw_label",
+        "status",
+        "display_taxonomy",
+        "evidence_url",
+        "review_date"
+      ],
+      "additionalProperties": true
+    },
+    "scientific": {
+      "type": "object",
+      "properties": {
+        "primarySourceId": {
+          "type": "string"
+        },
+        "root": {
+          "$ref": "#/$defs/root"
+        },
+        "traversal": {
+          "$ref": "#/$defs/traversal"
+        },
+        "selection": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "all"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        "reduction": {
+          "$ref": "#/$defs/recipe"
+        },
+        "corrections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/correction"
+          }
+        },
+        "edgeMeasure": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "meaning": {
+                  "const": "substitutions-per-site"
+                },
+                "unit": {
+                  "const": "substitutions/site"
+                },
+                "evidenceReferenceId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "meaning",
+                "unit",
+                "evidenceReferenceId"
+              ],
+              "additionalProperties": true
+            }
+          ]
+        },
+        "basis": {
+          "$ref": "#/$defs/scientificBasis"
+        }
+      },
+      "required": [
+        "primarySourceId",
+        "root",
+        "traversal",
+        "selection",
+        "reduction",
+        "corrections",
+        "edgeMeasure",
+        "basis"
+      ],
+      "additionalProperties": false
+    },
+    "compatibility": {
+      "type": "object",
+      "properties": {
+        "originalVersion": {
+          "enum": [
+            1,
+            2,
+            3
+          ]
+        },
+        "migrationVersion": {
+          "const": "scientific-basis-v3.1"
+        },
+        "historyStatus": {
+          "enum": [
+            "incomplete",
+            "recorded-from-creation"
+          ]
+        },
+        "notices": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "legacyProvenance": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "originalVersion",
+        "migrationVersion",
+        "historyStatus",
+        "notices",
+        "legacyProvenance"
+      ],
+      "additionalProperties": false
+    },
+    "scientificBasis": {
+      "type": "object",
+      "properties": {
+        "question": {
+          "type": "string",
+          "maxLength": 10000
+        },
+        "edgeMeaning": {
+          "type": "string",
+          "maxLength": 10000
+        },
+        "evidenceBasis": {
+          "type": "string",
+          "maxLength": 10000
+        },
+        "limitations": {
+          "type": "string",
+          "maxLength": 10000
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,150}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "relationshipKind": {
+          "enum": [
+            "phylogeny",
+            "classification",
+            "similarity",
+            "ecological-interaction",
+            "unspecified"
+          ]
+        },
+        "entityKind": {
+          "enum": [
+            "taxon-concepts",
+            "specimens",
+            "populations",
+            "genes-sequences",
+            "unspecified"
+          ]
+        },
+        "epistemicStatus": {
+          "enum": [
+            "published-hypothesis",
+            "classification-release",
+            "historical-model",
+            "teaching-example",
+            "unspecified"
+          ]
+        },
+        "provider": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            }
+          ]
+        },
+        "release": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            }
+          ]
+        },
+        "retrievedAt": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            }
+          ]
+        },
+        "sourceIds": {
+          "type": "array",
+          "maxItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,150}$"
+          },
+          "minItems": 1
+        },
+        "referenceIds": {
+          "type": "array",
+          "maxItems": 100,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,150}$"
+          }
+        },
+        "rightsRecordIds": {
+          "type": "array",
+          "maxItems": 100,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,150}$"
+          }
+        }
+      },
+      "required": [
+        "question",
+        "edgeMeaning",
+        "evidenceBasis",
+        "limitations",
+        "id",
+        "name",
+        "relationshipKind",
+        "entityKind",
+        "epistemicStatus",
+        "provider",
+        "release",
+        "retrievedAt",
+        "sourceIds",
+        "referenceIds",
+        "rightsRecordIds"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

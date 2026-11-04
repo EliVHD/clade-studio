@@ -1,0 +1,37 @@
+{
+  "article_doi": "10.1038/nmicrobiol.2016.48",
+  "files": [
+    {
+      "file": "data/supplementary_legends.pdf",
+      "url": "https://media.springernature.com/original/springer-static/esm/art%3A10.1038%2Fnmicrobiol.2016.48/MediaObjects/41564_2016_BFnmicrobiol201648_MOESM202_ESM.pdf",
+      "bytes": 174231,
+      "sha256": "bfde1c301afb1d4c2714b2568a6266ef69c81520d77f7b88584b6373ebe41147",
+      "retrieved_date": "2026-10-25"
+    },
+    {
+      "file": "data/supplementary_figure_1.pdf",
+      "url": "https://media.springernature.com/original/springer-static/esm/art%3A10.1038%2Fnmicrobiol.2016.48/MediaObjects/41564_2016_BFnmicrobiol201648_MOESM203_ESM.pdf",
+      "bytes": 572961,
+      "sha256": "045c68cb92c398a370dd467596a718a58597a86c320627afc8603ab9e5ebb500",
+      "retrieved_date": "2026-10-25"
+    },
+    {
+      "file": "data/genome_accessions.tsv",
+      "url": "https://media.springernature.com/original/springer-static/esm/art%3A10.1038%2Fnmicrobiol.2016.48/MediaObjects/41564_2016_BFnmicrobiol201648_MOESM205_ESM.txt",
+      "bytes": 335860,
+      "sha256": "41d6d8267b43fafdecd28bd75a7d3fc933c4023d239cdae154d503543fdae370",
+      "retrieved_date": "2026-10-25"
+    },
+    {
+      "file": "data/source_tree.nwk",
+      "url": "https://media.springernature.com/original/springer-static/esm/art%3A10.1038%2Fnmicrobiol.2016.48/MediaObjects/41564_2016_BFnmicrobiol201648_MOESM207_ESM.txt",
+      "bytes": 376713,
+      "sha256": "9829bbe7c058d7807c10fa63f7e6977087206e4355b60162ece4a45086540c61",
+      "retrieved_date": "2026-10-25"
+    }
+  ],
+  "citation": "Hug LA et al. A new view of the tree of life. Nature Microbiology 1, 16048 (2016).",
+  "publisher_license_statement": "Creative Commons Attribution 4.0 International; see article Rights and permissions for third-party exceptions.",
+  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+  "raw_files_modified": false
+}
