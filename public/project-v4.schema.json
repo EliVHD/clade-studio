@@ -2210,65 +2210,17 @@
       "additionalProperties": false
     },
     "sceneQA": {
-      "type": "object",
-      "properties": {
-        "status": {
-          "enum": [
-            "checked",
-            "draft"
-          ]
+      "oneOf": [
+        {
+          "$ref": "#/$defs/sceneQAV1"
         },
-        "coveragePassed": {
-          "type": "boolean"
+        {
+          "$ref": "#/$defs/sceneQAV2"
         },
-        "incidencePassed": {
-          "type": "boolean"
-        },
-        "crossingPassed": {
-          "type": "boolean"
-        },
-        "clearancePassed": {
-          "type": "boolean"
-        },
-        "labelCollisions": {
-          "type": "number"
-        },
-        "issues": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/sceneIssue"
-          }
-        },
-        "omittedIssueCount": {
-          "type": "number"
-        },
-        "checkedPairs": {
-          "type": "number"
-        },
-        "limited": {
-          "type": "boolean"
-        },
-        "limitations": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
+        {
+          "$ref": "#/$defs/sceneQAV3"
         }
-      },
-      "required": [
-        "status",
-        "coveragePassed",
-        "incidencePassed",
-        "crossingPassed",
-        "clearancePassed",
-        "labelCollisions",
-        "issues",
-        "omittedIssueCount",
-        "checkedPairs",
-        "limited",
-        "limitations"
-      ],
-      "additionalProperties": false
+      ]
     },
     "renderScene": {
       "type": "object",
@@ -2490,6 +2442,12 @@
             "type": "string"
           },
           "uniqueItems": true
+        },
+        "validationProfile": {
+          "enum": [
+            "compound-v2",
+            "compound-v3"
+          ]
         }
       },
       "required": [
@@ -2507,7 +2465,43 @@
         "pinnedEdges",
         "highlights"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "validationProfile"
+          ],
+          "properties": {
+            "validationProfile": {
+              "const": "compound-v2"
+            },
+            "qa": {
+              "$ref": "#/$defs/sceneQAV2"
+            }
+          }
+        },
+        {
+          "required": [
+            "validationProfile"
+          ],
+          "properties": {
+            "validationProfile": {
+              "const": "compound-v3"
+            },
+            "qa": {
+              "$ref": "#/$defs/sceneQAV3"
+            }
+          }
+        },
+        {
+          "properties": {
+            "validationProfile": false,
+            "qa": {
+              "$ref": "#/$defs/sceneQAV1"
+            }
+          }
+        }
+      ]
     },
     "artisticView": {
       "type": "object",
@@ -2724,6 +2718,12 @@
             "edits"
           ],
           "additionalProperties": false
+        },
+        "validationProfile": {
+          "enum": [
+            "compound-v2",
+            "compound-v3"
+          ]
         }
       },
       "required": [
@@ -2742,7 +2742,43 @@
         "highlights",
         "artistic"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "validationProfile"
+          ],
+          "properties": {
+            "validationProfile": {
+              "const": "compound-v2"
+            },
+            "qa": {
+              "$ref": "#/$defs/sceneQAV2"
+            }
+          }
+        },
+        {
+          "required": [
+            "validationProfile"
+          ],
+          "properties": {
+            "validationProfile": {
+              "const": "compound-v3"
+            },
+            "qa": {
+              "$ref": "#/$defs/sceneQAV3"
+            }
+          }
+        },
+        {
+          "properties": {
+            "validationProfile": false,
+            "qa": {
+              "$ref": "#/$defs/sceneQAV1"
+            }
+          }
+        }
+      ]
     },
     "metricMeasure": {
       "type": "object",
@@ -2955,6 +2991,12 @@
             "type": "string"
           },
           "uniqueItems": true
+        },
+        "validationProfile": {
+          "enum": [
+            "compound-v2",
+            "compound-v3"
+          ]
         }
       },
       "required": [
@@ -2972,7 +3014,43 @@
         "pinnedEdges",
         "highlights"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "validationProfile"
+          ],
+          "properties": {
+            "validationProfile": {
+              "const": "compound-v2"
+            },
+            "qa": {
+              "$ref": "#/$defs/sceneQAV2"
+            }
+          }
+        },
+        {
+          "required": [
+            "validationProfile"
+          ],
+          "properties": {
+            "validationProfile": {
+              "const": "compound-v3"
+            },
+            "qa": {
+              "$ref": "#/$defs/sceneQAV3"
+            }
+          }
+        },
+        {
+          "properties": {
+            "validationProfile": false,
+            "qa": {
+              "$ref": "#/$defs/sceneQAV1"
+            }
+          }
+        }
+      ]
     },
     "metricRenderScene": {
       "type": "object",
@@ -3394,6 +3472,12 @@
             "type": "string"
           },
           "uniqueItems": true
+        },
+        "validationProfile": {
+          "enum": [
+            "compound-v2",
+            "compound-v3"
+          ]
         }
       },
       "required": [
@@ -3411,7 +3495,43 @@
         "pinnedEdges",
         "highlights"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "validationProfile"
+          ],
+          "properties": {
+            "validationProfile": {
+              "const": "compound-v2"
+            },
+            "qa": {
+              "$ref": "#/$defs/sceneQAV2"
+            }
+          }
+        },
+        {
+          "required": [
+            "validationProfile"
+          ],
+          "properties": {
+            "validationProfile": {
+              "const": "compound-v3"
+            },
+            "qa": {
+              "$ref": "#/$defs/sceneQAV3"
+            }
+          }
+        },
+        {
+          "properties": {
+            "validationProfile": false,
+            "qa": {
+              "$ref": "#/$defs/sceneQAV1"
+            }
+          }
+        }
+      ]
     },
     "unrootedSpec": {
       "type": "object",
@@ -3717,6 +3837,12 @@
             "type": "string"
           },
           "uniqueItems": true
+        },
+        "validationProfile": {
+          "enum": [
+            "compound-v2",
+            "compound-v3"
+          ]
         }
       },
       "required": [
@@ -3733,6 +3859,361 @@
         "pinnedNodes",
         "pinnedEdges",
         "highlights"
+      ],
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "validationProfile"
+          ],
+          "properties": {
+            "validationProfile": {
+              "const": "compound-v2"
+            },
+            "qa": {
+              "$ref": "#/$defs/sceneQAV2"
+            }
+          }
+        },
+        {
+          "required": [
+            "validationProfile"
+          ],
+          "properties": {
+            "validationProfile": {
+              "const": "compound-v3"
+            },
+            "qa": {
+              "$ref": "#/$defs/sceneQAV3"
+            }
+          }
+        },
+        {
+          "properties": {
+            "validationProfile": false,
+            "qa": {
+              "$ref": "#/$defs/sceneQAV1"
+            }
+          }
+        }
+      ]
+    },
+    "sceneQAV1": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "checked",
+            "draft"
+          ]
+        },
+        "coveragePassed": {
+          "type": "boolean"
+        },
+        "incidencePassed": {
+          "type": "boolean"
+        },
+        "crossingPassed": {
+          "type": "boolean"
+        },
+        "clearancePassed": {
+          "type": "boolean"
+        },
+        "labelCollisions": {
+          "type": "number"
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sceneIssue"
+          }
+        },
+        "omittedIssueCount": {
+          "type": "number"
+        },
+        "checkedPairs": {
+          "type": "number"
+        },
+        "limited": {
+          "type": "boolean"
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "status",
+        "coveragePassed",
+        "incidencePassed",
+        "crossingPassed",
+        "clearancePassed",
+        "labelCollisions",
+        "issues",
+        "omittedIssueCount",
+        "checkedPairs",
+        "limited",
+        "limitations"
+      ],
+      "additionalProperties": false
+    },
+    "sceneQAV2": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "checked",
+            "draft"
+          ]
+        },
+        "coveragePassed": {
+          "type": "boolean"
+        },
+        "incidencePassed": {
+          "type": "boolean"
+        },
+        "crossingPassed": {
+          "type": "boolean"
+        },
+        "clearancePassed": {
+          "type": "boolean"
+        },
+        "labelCollisions": {
+          "type": "number"
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sceneIssue"
+          }
+        },
+        "omittedIssueCount": {
+          "type": "number"
+        },
+        "checkedPairs": {
+          "type": "number"
+        },
+        "limited": {
+          "type": "boolean"
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "issueCounts": {
+          "type": "object",
+          "properties": {
+            "incidence": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "contact": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "clearance": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "labels": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "bounds": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "legibility": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "font": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "incidence",
+            "contact",
+            "clearance",
+            "labels",
+            "bounds",
+            "legibility",
+            "font"
+          ],
+          "additionalProperties": false
+        },
+        "completeness": {
+          "type": "object",
+          "properties": {
+            "strokes": {
+              "type": "boolean"
+            },
+            "labels": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "strokes",
+            "labels"
+          ],
+          "additionalProperties": false
+        },
+        "work": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "status",
+        "coveragePassed",
+        "incidencePassed",
+        "crossingPassed",
+        "clearancePassed",
+        "labelCollisions",
+        "issues",
+        "omittedIssueCount",
+        "checkedPairs",
+        "limited",
+        "limitations",
+        "issueCounts",
+        "completeness",
+        "work"
+      ],
+      "additionalProperties": false
+    },
+    "sceneQAV3": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "checked",
+            "draft"
+          ]
+        },
+        "coveragePassed": {
+          "type": "boolean"
+        },
+        "incidencePassed": {
+          "type": "boolean"
+        },
+        "crossingPassed": {
+          "type": "boolean"
+        },
+        "clearancePassed": {
+          "type": "boolean"
+        },
+        "labelCollisions": {
+          "type": "number"
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sceneIssue"
+          }
+        },
+        "omittedIssueCount": {
+          "type": "number"
+        },
+        "checkedPairs": {
+          "type": "number"
+        },
+        "limited": {
+          "type": "boolean"
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "issueCounts": {
+          "type": "object",
+          "properties": {
+            "incidence": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "contact": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "clearance": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "labels": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "bounds": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "legibility": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "font": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "incidence",
+            "contact",
+            "clearance",
+            "labels",
+            "bounds",
+            "legibility",
+            "font"
+          ],
+          "additionalProperties": false
+        },
+        "completeness": {
+          "type": "object",
+          "properties": {
+            "incidence": {
+              "type": "boolean"
+            },
+            "strokes": {
+              "type": "boolean"
+            },
+            "labels": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "incidence",
+            "strokes",
+            "labels"
+          ],
+          "additionalProperties": false
+        },
+        "work": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "status",
+        "coveragePassed",
+        "incidencePassed",
+        "crossingPassed",
+        "clearancePassed",
+        "labelCollisions",
+        "issues",
+        "omittedIssueCount",
+        "checkedPairs",
+        "limited",
+        "limitations",
+        "issueCounts",
+        "completeness",
+        "work"
       ],
       "additionalProperties": false
     }

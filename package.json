@@ -10,7 +10,7 @@
   "scripts": {
     "build": "node tools/build.mjs",
     "check": "tsc --noEmit",
-    "test": "node tests/science.test.ts && node tests/editor.test.ts && node tests/design.test.ts && node tests/fitting.test.ts && node tests/distribution.test.mjs && node tests/identity.test.ts && node tests/release.test.mjs && node tests/project-v2.test.ts && node tests/structured.test.ts && node tests/readability.test.ts && node tests/artistic-copy.test.ts && node tests/metric.test.ts && node tests/classification.test.ts && node tests/unrooted.test.ts && node tests/search.test.ts && node tests/import.test.ts && node tests/datasets.test.ts && node tests/explore.test.ts",
+    "test": "node tests/science.test.ts && node tests/editor.test.ts && node tests/design.test.ts && node tests/fitting.test.ts && node tests/distribution.test.mjs && node tests/identity.test.ts && node tests/release.test.mjs && node tests/project-v2.test.ts && node tests/structured.test.ts && node tests/readability.test.ts && node tests/artistic-copy.test.ts && node tests/metric.test.ts && node tests/classification.test.ts && node tests/unrooted.test.ts && node tests/search.test.ts && node tests/import.test.ts && node tests/datasets.test.ts && node tests/explore.test.ts && node tests/replay-compatibility.test.ts && node tests/geometry-quality.test.ts && node tests/readability-quality.test.ts && node tests/routing-quality.test.ts && node tests/inspection-quality.test.ts",
     "examples": "node tools/export-example.ts && node tools/export-structured-example.ts",
     "start": "node tools/serve.mjs",
     "dev": "npm run build && npm start",

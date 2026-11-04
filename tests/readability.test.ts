@@ -73,7 +73,7 @@ test('accepted readability is an explicit method with exact final settings; V4 s
   const next=structuredClone(f.project);next.authoring.structuredViews={[view.id]:view};next.authoring.activeStructuredViewId=view.id;
   const saved=acceptCommand(f.project,next,f.source,{methods:['selected-taxon-projection','clade-cluster','compound-validation','readability-assist'],replace:true,parameters:{readability:r.readability,settings:r.scene.settings}});
   const reopened=await loadAnyProject(serializeProject(saved));assert.deepEqual(reopened.project.authoring.structuredViews,saved.authoring.structuredViews);
-  assert.ok(activeProvenance(saved).methods['readability-assist@1.0.0']);
+  assert.ok(activeProvenance(saved).methods['readability-assist@3.0.0']);
   // The fixture's old contribution definitions must not be reinterpreted by adding a method.
   await loadAnyProject(await readFile('tests/fixtures/structured-v3.json','utf8'));
 });

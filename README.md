@@ -19,7 +19,7 @@ The app runs on your computer, with no account, backend or file uploads. After i
 - **Choose your source:** open a Newick file, resume a saved project or use the bundled tree-of-life, mammal, primate and plant datasets.
 - **Find and explore:** search the complete source, including hidden tips, and inspect large trees in a separate zoomable Explore view.
 - **Choose a layout:** rectangular, circular or fan cladograms; source-distance phylograms; supplied-rank classifications; and unrooted equal-angle or daylight views.
-- **Refine the artwork:** adjust labels and shared junctions, pin geometry, preview readability improvements, or create a separate artistic copy. The Organic workspace adds manual curves, silhouette borders and fitting.
+- **Refine the artwork:** adjust labels and shared junctions, pin geometry, preview readability improvements, or create a separate artistic copy. The Free arrangement workspace adds manual curves, silhouette borders and fitting.
 - **Keep the evidence:** save editable projects and export paired labeled/unlabeled SVGs with source mappings, references, Sources & Methods and geometry checks.
 
 **Version 0.1.0 is the first release.** Layouts and fitting can still produce drafts with overlaps or spacing issues. The app reports those findings so you can inspect and refine the result.
@@ -85,6 +85,8 @@ Choose **Explore** above the canvas to inspect the complete source in rectangula
 | SVG | Use in another graphics editor or print at the stated physical dimensions. Resume source-aware editing from the project file. |
 
 Editing reference images are omitted from artwork SVGs but remain embedded in saved projects, including the project inside an export package.
+
+Geometry checks report shared-junction incidence, stroke contacts and label checks separately. A work limit can leave a check **Incomplete**; that result cannot pass. Historical saved geometry and QA replay under their original validation profile, while current checks and exported QA use the latest profile. Artistic drag previews show **MOVING · geometry unchecked** and validate the final edit on release.
 
 ## Scope and limits
 

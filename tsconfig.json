@@ -8,6 +8,7 @@
     "noUncheckedIndexedAccess": false,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
     "rewriteRelativeImportExtensions": true,
     "rootDir": "src",
     "outDir": "dist/app",

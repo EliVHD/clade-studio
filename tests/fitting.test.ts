@@ -7,7 +7,7 @@ import { DEFAULT_PRESENTATION, generateLayout, moveNodes, splitRoute, reconcileL
 import { assignBorder, bindBorder, borderTargets, scopedEndpoints } from '../src/design.ts';
 import { fitSilhouette, fittingTargets } from '../src/fitting.ts';
 import { refineRouting } from '../src/routing.ts';
-import { DEFAULT_FIT_SETTINGS, validateFitSettings, directionAngle } from '../src/fit-settings.ts';
+import { DEFAULT_FIT_SETTINGS, validateFitSettings, directionAngle, fitMethodIds } from '../src/fit-settings.ts';
 import { History, loadProject, validateLayout } from '../src/project.ts';
 import type { Design, EndpointBorder, FitSettings, Project } from '../src/types.ts';
 
@@ -28,6 +28,14 @@ async function fixture() {
 function run(f: Awaited<ReturnType<typeof fixture>>, settings: Partial<FitSettings> = {}) {
   return fitSilhouette(f.rooted, f.reduction, f.layout, f.presentation, f.design, { ...DEFAULT_FIT_SETTINGS, ...settings });
 }
+test('fit provenance records executed fork-only optimization and excludes an unexecuted search', async () => {
+  const f = await fixture();
+  const forkOnly = run(f, { routing: 0, forkSpread: .65 });
+  assert.ok(forkOnly.routingDiagnostics!.attempts > 0);
+  assert.deepEqual(fitMethodIds(forkOnly), ['junction-fit', 'route-search']);
+  assert.deepEqual(fitMethodIds(run(f, { routing: 0, forkSpread: 0 })), ['junction-fit']);
+  assert.deepEqual(fitMethodIds(run(f, { strength: 0 })), ['junction-fit']);
+});
 test('silhouette fitting repositions scientific junctions and endpoints, without mutating inputs', async () => {
   const f = await fixture(), before = structuredClone(f), result = run(f);
   assert.equal(result.movedJunctions.length, 2); assert.equal(result.movedEndpoints, 4);
@@ -249,7 +257,12 @@ test('stroke width informs routing and impossible thick-stroke clearances remain
   const thick = run(f, settings), unrefined = run(f, { ...settings, routing: 0, forkSpread: 0 });
   assert.notDeepEqual(thin.layout.routes, thick.layout.routes);
   const qa = (layout: typeof f.layout) => validateGeometry(f.source, f.rooted, f.recipe, f.reduction, layout, f.presentation);
-  assert.ok(qa(thick.layout).minClearanceMm! > qa(unrefined.layout).minClearanceMm! + 1);
+  const before = qa(unrefined.layout), after = qa(thick.layout);
+  // The former scalar test rewarded a 3-to-7 increase in contact pairs to gain
+  // 1 mm of worst clearance. Contact non-regression takes priority instead.
+  assert.ok(after.issues.filter(i => i.type === 'crossing' || i.type === 'self-intersection').length <= before.issues.filter(i => i.type === 'crossing' || i.type === 'self-intersection').length);
+  assert.ok(after.minClearanceMm! > before.minClearanceMm!);
+  for (const target of borderTargets(f.border, f.rooted, f.reduction, f.layout)) assert.deepEqual(thick.layout.nodes[target.id], target.point);
   assert.equal(qa(thick.layout).status, 'draft');
   assert.equal(qa(thick.layout).coveragePassed, true); assert.equal(qa(thick.layout).incidencePassed, true);
 });

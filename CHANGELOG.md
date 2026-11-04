@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased maintenance
+
+- Count routing candidate enumeration against the search budget and disclose exact work/evaluation exhaustion.
+- Report truncated shared-junction incidence checks as incomplete, with exact compound-v1/v2 replay and current compound-v3 validation.
+- Defer historical artistic-copy validation during pointer movement; validate on release and retain cancellation and one-step undo.
+
+- Detect extended branch overlap and self-crossing stems while preserving historical saved geometry and checks.
+- Complete larger-tree validation with indexed geometry, full issue totals and explicit incomplete-check reporting.
+- Improve topology inspection spacing and branch alignment without encoding source distance or changing the page.
+- Distribute bounded routing work across affected branches and prevent cosmetic improvements from adding contacts.
+- Rank readability proposals using complete checks and avoid unnecessary growth of already readable rectangular drawings.
+- Clarify view and fitting control names, and retain the methods actually executed in accepted-fit records.
+
 ## 0.1.0 — first release
 
 Initial local authoring release of Clade Studio.

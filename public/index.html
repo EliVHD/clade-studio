@@ -68,7 +68,7 @@
           <p class="help">Area selection includes junctions inside the rectangle. The saved selected IDs stay fixed when moved. Curve waypoints are geometry, not new branches.</p>
         </section>
         <section id="panel-shape" class="tool-panel" hidden>
-          <p id="shape-readonly" class="help note" hidden>Switch to Organic to use drawing guides and a reference image.</p>
+          <p id="shape-readonly" class="help note" hidden>Switch to Free arrangement to use drawing guides and a reference image.</p>
           <fieldset id="shape-fields" class="plain-fieldset">
             <h2>Endpoint borders</h2>
             <p class="help">Select a group of endpoints, then draw its border. Repeat for another group; Fit can use all saved borders together.</p>
@@ -114,7 +114,7 @@
         <section id="panel-fit" class="tool-panel" hidden>
           <h2>Fit to silhouette</h2>
           <p class="help">Arrange endpoints, junctions and curves together. Draw and assign borders in Shape, then preview a fit here.</p>
-          <p id="fit-readonly" class="help note" hidden>Switch to Organic to fit the artwork.</p>
+          <p id="fit-readonly" class="help note" hidden>Switch to Free arrangement to fit the artwork.</p>
           <fieldset id="fit-artwork-style" class="plain-fieldset">
             <div class="field-grid"><label>Line width, mm<input id="fit-stroke" type="number" min=".01" max="10" step=".05" value=".25"></label><label>Branch taper<input id="fit-taper" type="number" min="0" max="5" step=".1" value=".8"></label></div>
             <label class="check-row"><input id="fit-allow-curves" type="checkbox" checked> Allow curved lines</label>
@@ -141,14 +141,14 @@
             <div class="slider-row"><input id="fit-depth" type="range" min="0" max="100" step="1" value="45"></div>
             <div class="fit-range-labels"><span>Earlier forks · near origin</span><span>Later · near border</span></div>
             <div class="field-grid"><label>Junction spacing, mm<input id="fit-spacing" type="number" min=".1" max="20" step=".1" value="3"></label></div>
-            <label class="field-label" for="fit-routing">Spacing-aware routing <output id="fit-routing-value">75%</output></label>
+            <label class="field-label" for="fit-routing">Branch separation <output id="fit-routing-value">75%</output></label>
             <div class="slider-row"><input id="fit-routing" type="range" min="0" max="100" step="1" value="75"></div>
             <label class="field-label" for="fit-fork-spread">Fork spread <output id="fit-fork-spread-value">65%</output></label>
             <div class="slider-row"><input id="fit-fork-spread" type="range" min="0" max="100" step="1" value="65"></div>
             <p class="help compact-help">Routing searches for space around the full strokes and adjusts junctions. Fork spread opens branch angles around the common direction. Higher values favor wider, less parallel forks. Straight mode adjusts junctions without adding bends.</p>
-            <label class="field-label" for="fit-flow">Retain current bends <output id="fit-flow-value">40%</output></label>
+            <label class="field-label" for="fit-flow">Preserve current arrangement <output id="fit-flow-value">40%</output></label>
             <div class="slider-row"><input id="fit-flow" type="range" min="0" max="100" step="1" value="40"></div>
-            <p class="help compact-help">Lower values rebuild the branching structure toward the borders. Higher values retain more of its current flow.</p>
+            <p class="help compact-help">Lower values rebuild the branching structure toward the borders. Higher values preserve more of the current junction arrangement and branch flow.</p>
             <h2>Junction anchors</h2>
             <p class="help">Position important forks over your reference, then pin them. The origin always stays fixed. Unassigned clades stay in place.</p>
             <div class="button-row"><button id="fit-pin-selected" class="button">Pin selected junctions</button><button id="fit-unpin-selected" class="button">Unpin selected</button></div>
@@ -226,7 +226,7 @@ species</textarea><p class="help">This editable order is a drawing policy, not d
       <div class="sidebar-footer"><span class="local-dot"></span>Your data stays in this browser<a href="/third-party-notices.html" target="_blank" rel="noopener">Sources &amp; licenses</a></div>
     </aside>
     <section class="canvas-area" aria-label="Tree editor">
-      <div class="canvas-toolbar"><div class="view-switch"><button id="organic-view" class="active">Organic</button><button id="scientific-view">Scientific</button><button id="structured-view">Layouts</button><button id="explore-view-btn">Explore</button></div><span class="canvas-context" id="canvas-context">Editable arrangement</span><div class="toolbar-right"><button id="undo-btn" class="icon-button" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button><button id="redo-btn" class="icon-button" title="Redo (Ctrl+Shift+Z)" aria-label="Redo">↷</button><span class="toolbar-divider"></span><button id="fit-btn" class="button compact">Fit</button></div></div>
+      <div class="canvas-toolbar"><div class="view-switch"><button id="organic-view" class="active">Free arrangement</button><button id="scientific-view">Topology inspection</button><button id="structured-view">Structured layouts</button><button id="explore-view-btn">Explore</button></div><span class="canvas-context" id="canvas-context">Editable arrangement</span><div class="toolbar-right"><button id="undo-btn" class="icon-button" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button><button id="redo-btn" class="icon-button" title="Redo (Ctrl+Shift+Z)" aria-label="Redo">↷</button><span class="toolbar-divider"></span><button id="fit-btn" class="button compact">Fit view</button></div></div>
       <div id="stage" class="stage" tabindex="0" aria-label="Interactive tree canvas. Select a junction to inspect and edit it."><svg id="canvas" xmlns="http://www.w3.org/2000/svg" aria-label="Phylogenetic tree" role="img"></svg><div id="fit-preview-banner" class="fit-preview-banner" hidden><span id="fit-preview-caption">Fit preview · blue marks show moved junctions</span><button id="accept-fit" class="button primary compact">Use fit</button><button id="discard-fit" class="button compact">Discard</button></div><div id="design-mode-hint" class="design-mode-hint" hidden></div><div class="loading" id="loading">Preparing your tree…</div></div>
       <div class="canvas-bottom"><span><span class="draft-dot"></span><span id="draft-status">DRAFT · Geometry unchecked</span></span><span id="page-size">90 × 220 mm</span><span id="zoom-label">Fit to view</span></div>
       <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>

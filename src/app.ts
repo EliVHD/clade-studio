@@ -20,7 +20,7 @@ import { exportStructuredFiles } from './structured/export.ts';
 import type { ScientificBasis } from './model/document.ts';
 import { provenanceReport, addArtifactManifest } from './export-provenance.ts';
 import { escapeXML as esc, exportFiles, zipFiles } from './export.ts';
-import { DEFAULT_FIT_SETTINGS, validateFitSettings, validateBranchDirection, directionVector, directionAngle } from './fit-settings.ts';
+import { DEFAULT_FIT_SETTINGS, validateFitSettings, validateBranchDirection, directionVector, directionAngle, fitMethodIds } from './fit-settings.ts';
 import { routingDemo } from './demo.ts';
 import { verifyBuildIdentity } from './provenance/identity.ts';
 import type { BuildInfo, BuildManifest } from './provenance/identity.ts';
@@ -46,7 +46,7 @@ let toastTimeout: ReturnType<typeof setTimeout>, sliderTimeout: ReturnType<typeo
 let unsaved = false, importing = false;
 let sourceSearchOffset=0,sourceSearchSha='';
 const explorer = new ExploreController();
-const teacher = new StructuredController({
+const structuredController = new StructuredController({
   project:()=>{if(!hasAuthoring(project))throw new Error('Missing authoring state.');return project;},source:()=>source,rooted:()=>rooted,selected:()=>[...selected],
   commit:(proposal,evidence)=>{const before=structuredClone(project);project=proposal;accepted(before,evidence);invalidate();render();},
   render:()=>render(),fit:()=>fit(),focus:bounds=>{const pad=8,w=Math.max(15,bounds.maxX-bounds.minX),h=Math.max(15,bounds.maxY-bounds.minY);viewBox={x:(bounds.minX+bounds.maxX-w)/2-pad,y:(bounds.minY+bounds.maxY-h)/2-pad,w:w+2*pad,h:h+2*pad};setViewBox();$('zoom-label').textContent='Focused drawing';},calculate:payload=>workerTask('structured',payload),
@@ -78,11 +78,11 @@ function regenerationEvidence(target = rooted.rootId): CommandEvidence {
   return { kind: 'layout', methods: ['organic-initializer'], inputs, parameters: { target, pins: { nodes: project.layout.pinnedNodes, edges: project.layout.pinnedEdges }, presentation: project.presentation }, notes: 'Regenerated with the target anchor and pins retained; dependencies include those retained positions.' };
 }
 function mutate(action: () => void, affectsGeometry = true, evidence: CommandEvidence = {}): void {
-  if (teacher.enabled) throw new Error('Use the Layout controls for constrained structured changes, or return to Organic for artistic editing.');
+  if (structuredController.enabled) throw new Error('Use the Layout controls for constrained structured changes, or return to Free arrangement for artistic editing.');
   if (fitPreview) throw new Error('Keep or discard the fit preview before editing.');
   clearFit(); commitOpacity();
   if (!semanticCapabilities(project.authoring!.root, 'artistic', project.authoring!.edgeMeasure, project.authoring!.basis).canEditGeometry) throw new Error('This relationship adapter is not implemented. Edit the basis metadata or inspect the saved artwork.');
-  if (view === 'scientific') throw new Error('Switch to Organic to edit geometry. The scientific view is for inspection.');
+  if (view === 'scientific') throw new Error('Switch to Free arrangement to edit geometry. Topology inspection is read-only.');
   if (pendingReduction) throw new Error('Wait for the pending reduction to finish before editing.');
   const before = structuredClone(project);
   try { action(); accepted(before, evidence); } catch (error) { project = before; render(); throw error; }
@@ -114,7 +114,7 @@ async function applyRecipe(next: Recipe, message?: string): Promise<void> {
     project.recipe = next; rooted = orient(source, next.root); reduction = result;
     project.layout = reconcileLayout(rooted, reduction, project.presentation, project.layout); syncRecipe();
     accepted(before, { kind: 'scientific', methods: ['maximal-frontier', 'organic-initializer'], parameters: { recipe: project.recipe }, notes: 'Accepted reduction; existing and hidden geometry retained by reconciliation.' });
-    scientificLayout = generateLayout(rooted, reduction, project.presentation, 'scientific'); invalidate();
+    scientificLayout = generateLayout(rooted, reduction, project.presentation, 'scientific', project.layout); invalidate();
     if (message) toast(message);
   } finally { if (version === scienceVersion) { pendingReduction = false; desiredRecipe = null; render(); } }
 }
@@ -134,7 +134,7 @@ function select(id: string, extend = false): void {
   renderCanvas(); renderInspector(); renderDesignControls(); renderFitControls();
 }
 function fit(): void {
-  const p = teacher.enabled ? teacher.dimensions : project.presentation; viewBox = { x: -p.widthMm * .12, y: -p.heightMm * .045, w: p.widthMm * 1.24, h: p.heightMm * 1.09 };
+  const p = structuredController.enabled ? structuredController.dimensions : project.presentation; viewBox = { x: -p.widthMm * .12, y: -p.heightMm * .045, w: p.widthMm * 1.24, h: p.heightMm * 1.09 };
   setViewBox(); $('zoom-label').textContent = 'Fit to view';
 }
 function setViewBox(): void { $('canvas').setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`); }
@@ -149,21 +149,21 @@ function updateButtons(): void {
   for (const id of ['export-btn', 'save-btn', 'validate-btn']) ($<HTMLButtonElement>(id)).disabled = !ready || pendingReduction || pendingFit || !!fitPreview;
   $<HTMLFieldSetElement>('shape-fields').disabled = pendingReduction || view === 'scientific' || pendingFit || !!fitPreview;
   for (const id of ['artwork-style', 'fit-artwork-style']) $<HTMLFieldSetElement>(id).disabled = view !== 'organic' || pendingReduction || pendingFit || !!fitPreview;
-  $('structured-view').classList.toggle('active',teacher.enabled);$('structured-view').textContent=teacher.view?.intent==='artistic'?'Artistic copy':teacher.view?.intent==='phylogram'?'Phylogram':teacher.view?.intent==='taxonomy'?'Classification':teacher.view?.intent==='unrooted'?'Unrooted':teacher.view?.intent==='cladogram'?'Cladogram':'Layouts';
-  if(teacher.enabled){$('organic-view').classList.remove('active');$('scientific-view').classList.remove('active');}
-  $('import-btn').toggleAttribute('disabled',!ready||importing||pendingReduction||pendingFit||!!fitPreview||teacher.pending);$('import-btn').textContent=importing?'Checking file…':'Open file';
-  $('datasets-btn').toggleAttribute('disabled',!ready||importing||pendingReduction||pendingFit||!!fitPreview||teacher.pending);
+  $('structured-view').classList.toggle('active',structuredController.enabled);$('structured-view').textContent=structuredController.view?.intent==='artistic'?'Artistic copy':structuredController.view?.intent==='phylogram'?'Phylogram':structuredController.view?.intent==='taxonomy'?'Classification':structuredController.view?.intent==='unrooted'?'Unrooted':structuredController.view?.intent==='cladogram'?'Cladogram':'Structured layouts';
+  if(structuredController.enabled){$('organic-view').classList.remove('active');$('scientific-view').classList.remove('active');}
+  $('import-btn').toggleAttribute('disabled',!ready||importing||pendingReduction||pendingFit||!!fitPreview||structuredController.pending);$('import-btn').textContent=importing?'Checking file…':'Open file';
+  $('datasets-btn').toggleAttribute('disabled',!ready||importing||pendingReduction||pendingFit||!!fitPreview||structuredController.pending);
   $('open-dataset').toggleAttribute('disabled',importing);
-  $('save-btn').toggleAttribute('disabled',!ready||pendingReduction||pendingFit||!!fitPreview||teacher.pending);
-  $('export-btn').title=!teacher.enabled&&view==='scientific'?'Return to Organic or an accepted Layout view to export a design.':'';
-  if(teacher.enabled)$('export-btn').toggleAttribute('disabled',!teacher.exportable);else if(view==='scientific')$('export-btn').setAttribute('disabled','');
-  $('canvas-context').textContent = teacher.enabled ? teacher.busy?'Building structured view…':teacher.preview?teacher.dragging?'Moving artistic geometry':'Structured preview · original retained':teacher.view?.intent==='artistic'?'Artistic copy · source connectivity retained':teacher.view?.intent==='taxonomy'?'Classification · supplied parent links':teacher.view?.intent==='unrooted'?'Unrooted · display origin only':teacher.view?.intent==='phylogram'?'Phylogram · source distances':'Nonmetric structured cladogram' : pendingFit ? 'Fitting junctions…' : fitPreview ? compareOriginal ? 'Comparing original arrangement' : 'Preview · artwork unchanged' : pendingReduction ? 'Recalculating reduction…' : view === 'scientific' ? 'Topology inspection · normalized depth' : 'Editable arrangement';
+  $('save-btn').toggleAttribute('disabled',!ready||pendingReduction||pendingFit||!!fitPreview||structuredController.pending);
+  $('export-btn').title=!structuredController.enabled&&view==='scientific'?'Return to Free arrangement or an accepted Layout view to export a design.':'';
+  if(structuredController.enabled)$('export-btn').toggleAttribute('disabled',!structuredController.exportable);else if(view==='scientific')$('export-btn').setAttribute('disabled','');
+  $('canvas-context').textContent = structuredController.enabled ? structuredController.busy?'Building structured view…':structuredController.preview?structuredController.dragging?'Moving artistic geometry':'Structured preview · original retained':structuredController.view?.intent==='artistic'?'Artistic copy · source connectivity retained':structuredController.view?.intent==='taxonomy'?'Classification · supplied parent links':structuredController.view?.intent==='unrooted'?'Unrooted · display origin only':structuredController.view?.intent==='phylogram'?'Phylogram · source distances':'Nonmetric structured cladogram' : pendingFit ? 'Fitting junctions…' : fitPreview ? compareOriginal ? 'Comparing original arrangement' : 'Preview · artwork unchanged' : pendingReduction ? 'Recalculating reduction…' : view === 'scientific' ? 'Topology inspection · normalized depth' : 'Editable arrangement';
 }
 function render(): void {
   if (!ready) return;
   $('endpoint-count').textContent = reduction.frontier.length.toLocaleString(); $('tip-count').textContent = source.tips.length.toLocaleString();
-  if(teacher.enabled&&teacher.view)$('endpoint-count').textContent=String(teacher.view.graph.endpoints.length);
-  $('coverage-text').textContent = teacher.enabled&&teacher.view ? `${teacher.view.graph.representedTips.length} represented · ${teacher.view.graph.omittedTips.length} omitted source tips` : `All ${source.tips.length.toLocaleString()} source tips accounted for`;
+  if(structuredController.enabled&&structuredController.view)$('endpoint-count').textContent=String(structuredController.view.graph.endpoints.length);
+  $('coverage-text').textContent = structuredController.enabled&&structuredController.view ? `${structuredController.view.graph.representedTips.length} represented · ${structuredController.view.graph.omittedTips.length} omitted source tips` : `All ${source.tips.length.toLocaleString()} source tips accounted for`;
   renderSourceSearch();
   $('project-title').textContent = project.title;
   $('basis-info-btn').textContent = `Scientific basis: ${project.authoring!.basis.name} · Edit`;
@@ -187,8 +187,8 @@ function render(): void {
   for (const id of ['allow-curves', 'fit-allow-curves']) input(id).checked = project.layout.lineStyle !== 'straight';
   const widths = reduction.visible.filter(id => rooted.nodes[id].parent).map(id => edgeWidth(rooted, id, p));
   $('line-style-status').textContent = `${project.layout.lineStyle === 'straight' ? 'Straight segments' : 'Curved lines'} · ${widths.length ? `${Math.min(...widths).toFixed(2)}–${Math.max(...widths).toFixed(2)}` : p.strokeMm.toFixed(2)} mm visible strokes`;
-  const page=teacher.enabled?teacher.dimensions:p;$('page-size').textContent = `${page.widthMm} × ${page.heightMm} mm`;
-  teacher.render();
+  const page=structuredController.enabled?structuredController.dimensions:p;$('page-size').textContent = `${page.widthMm} × ${page.heightMm} mm`;
+  structuredController.render();
   renderNotes(); renderCanvas(); renderInspector(); renderQA(); renderDesignControls(); renderFitControls(); updateButtons();
 }
 function renderNotes(): void {
@@ -203,7 +203,7 @@ function renderNotes(): void {
 }
 function renderCanvas(): void {
   if (!ready) return;
-  if(teacher.enabled){const size=teacher.dimensions;$('canvas').innerHTML=`<rect x="0" y="0" width="${size.widthMm}" height="${size.heightMm}" fill="#fffefa" stroke="#d7dfd2" stroke-width=".2"/>${teacher.canvas()}`;$('canvas').classList.add('structured-mode');setViewBox();return;}
+  if(structuredController.enabled){const size=structuredController.dimensions;$('canvas').innerHTML=`<rect x="0" y="0" width="${size.widthMm}" height="${size.heightMm}" fill="#fffefa" stroke="#d7dfd2" stroke-width=".2"/>${structuredController.canvas()}`;$('canvas').classList.add('structured-mode');setViewBox();return;}
   $('canvas').classList.remove('structured-mode');
   const svg = $('canvas'), layout = workingLayout(), p = project.presentation;
   const selectedEdges = new Set([...selected].flatMap(id => subtreeIds(rooted, id)));
@@ -220,7 +220,7 @@ function renderCanvas(): void {
   }).join('');
   const labels = p.labels ? reduction.frontier.map((e, i) => { const pos = labelPosition(layout, p, e.id); return `<text class="tree-label" data-label="${e.id}" x="${pos.x}" y="${pos.y}" font-size="2" font-family="Arial,sans-serif" fill="#758369">${i + 1}</text>`; }).join('') : '';
   const displayQA = displayedQA();
-  const issueMarks = displayQA && showIssues && view === 'organic' ? displayQA.issues.slice(0, 500).filter(x => x.point).map(x => `<circle cx="${x.point!.x}" cy="${x.point!.y}" r="1.2" fill="none" stroke="${x.type === 'crossing' || x.type === 'self-intersection' ? '#bd6654' : '#c99e61'}" stroke-width=".22" pointer-events="none"/>`).join('') : '';
+  const issueMarks = displayQA && showIssues ? displayQA.issues.slice(0, 500).filter(x => x.point).map(x => `<circle cx="${x.point!.x}" cy="${x.point!.y}" r="1.2" fill="none" stroke="${x.type === 'crossing' || x.type === 'self-intersection' ? '#bd6654' : '#c99e61'}" stroke-width=".22" pointer-events="none"/>`).join('') : '';
   let handles = '';
   if (selected.size === 1 && view === 'organic') {
     const id = currentId(), route = layout.routes[id], parent = rooted.nodes[id].parent;
@@ -237,7 +237,7 @@ function renderCanvas(): void {
   svg.classList.toggle('fit-preview-active', !!fitPreview); svg.classList.toggle('scientific-readonly', view === 'scientific'); setViewBox();
 }
 function renderInspector(): void {
-  if(teacher.enabled){$('selection-count').textContent=String(teacher.selected.size);$('inspector-content').innerHTML=teacher.inspector();return;}
+  if(structuredController.enabled){$('selection-count').textContent=String(structuredController.selected.size);$('inspector-content').innerHTML=structuredController.inspector();return;}
   $('selection-count').textContent = String(selected.size);
   const host = $('inspector-content');
   if (!selected.size) { host.innerHTML = '<div class="empty-state"><span class="empty-icon">⌁</span><h2>Every line has a lineage.</h2><p>Select a branch or junction to inspect its source, adjust its detail, or shape its curve.</p></div>'; return; }
@@ -279,7 +279,7 @@ function regenerate(target = rooted.rootId): void {
 function displayedQA(): QA | null { return fitPreview ? compareOriginal ? fitPreview.beforeQA : fitPreview.afterQA : qa; }
 function renderQA(): void {
   if (!ready) return;
-  if(teacher.enabled){const v=teacher.view;$('draft-status').textContent=teacher.dragging?'MOVING · geometry unchecked':v?`${teacher.dragging?'MOVING · checks pending':teacher.preview?'PREVIEW · ':''}${teacher.dragging?'':v.qa.status.toUpperCase()} · ${v.qa.crossingPassed?'No detected contacts':'Refinement needed'}`:'No structured view';$('qa-summary').innerHTML=v?teacher.summary(v):'<p>Preview a structured view.</p>';$('issue-list').innerHTML='';return;}
+  if(structuredController.enabled){const v=structuredController.view;$('draft-status').textContent=structuredController.qaStatus();$('qa-summary').innerHTML=v?structuredController.summary(v):'<p>Preview a structured view.</p>';$('issue-list').innerHTML='';return;}
   const qa = displayedQA();
   $('draft-status').textContent = qa ? `${fitPreview ? compareOriginal ? 'ORIGINAL · ' : 'PREVIEW · ' : ''}${qa.status.toUpperCase()} · ${qa.crossingPassed ? 'No detected contacts' : 'Refinement needed'}` : 'DRAFT · Geometry unchecked';
   if (!qa) { $('qa-summary').innerHTML = '<p>No current geometry check. Changes invalidate earlier results.</p>'; $('issue-list').innerHTML = ''; return; }
@@ -300,8 +300,8 @@ function download(name: string, data: string | Uint8Array, type: string): void {
 }
 function snapshot(): Project { commitOpacity(); validateDesign(project.design, rooted); return { ...structuredClone(project), recipe: savedRecipe(), selection: [...selected] }; }
 async function exportPackage(): Promise<void> {
-  if(!teacher.enabled&&view==='scientific')throw new Error('Scientific is a normalized inspection. Return to Organic or an accepted Layout view to export that design.');
-  if(teacher.enabled){if(!teacher.exportable)throw new Error('Accept a current structured layout before exporting.');const state=snapshot();if(!hasAuthoring(state))throw new Error('Missing document.');const files=exportStructuredFiles(source,state,exportingBuild);files['build-manifest.json']=JSON.stringify(exportingBuildManifest,null,2);addArtifactManifest(files,state);download(`clade-studio-${teacher.view!.intent}-${teacher.view!.qa.status}.zip`,zipFiles(files),'application/zip');toast('Structured package exported with source paths, represented/omitted memberships, exact scene and Sources & Methods.');return;}
+  if(!structuredController.enabled&&view==='scientific')throw new Error('Topology inspection uses normalized spacing. Return to Free arrangement or an accepted Layout view to export that design.');
+  if(structuredController.enabled){if(!structuredController.exportable)throw new Error('Accept a current structured layout before exporting.');const state=snapshot();if(!hasAuthoring(state))throw new Error('Missing document.');const files=exportStructuredFiles(source,state,exportingBuild);files['build-manifest.json']=JSON.stringify(exportingBuildManifest,null,2);addArtifactManifest(files,state);download(`clade-studio-${structuredController.view!.intent}-${structuredController.qaFor(structuredController.view!).status}.zip`,zipFiles(files),'application/zip');toast('Structured package exported with source paths, represented/omitted memberships, exact scene and Sources & Methods.');return;}
   toast('Checking the artwork and assembling the export package…');
   const result = qa ?? await runValidation(); if (!result) return;
   const state = snapshot(), files = exportFiles(source, rooted, reduction, state, result, exportingBuild);
@@ -312,7 +312,7 @@ async function exportPackage(): Promise<void> {
 }
 async function importFile(file: File): Promise<void> {
   if(importing)throw new Error('Another file is still being checked.');
-  const checkIdle=()=>{if(!ready||pendingReduction||pendingFit||fitPreview||teacher.pending)throw new Error('Finish or discard the current calculation/preview before opening another file.');};
+  const checkIdle=()=>{if(!ready||pendingReduction||pendingFit||fitPreview||structuredController.pending)throw new Error('Finish or discard the current calculation/preview before opening another file.');};
   checkIdle();const baseRevision=currentRevision(),baseViewId=effectiveViewId(project as import('./model/document.ts').WorkingProject);importing=true;updateButtons();
   try {
     if(file.size>50_000_000)throw new Error('File exceeds the 50 MB limit.');
@@ -328,48 +328,48 @@ function installPrepared(prepared:Exclude<PreparedImport,{kind:'recipe'}>):void 
     if (explorer.active) explorer.close();
     endDrag(true);commitOpacity();
     if(unsaved){const state=snapshot();if(!hasAuthoring(state))throw new Error('Missing document.');download('before-import.treeproject.json',serializeProject(state,exportingBuild),'application/json');}
-    clearTimeout(sliderTimeout);teacher.discard();clearFit();for(const task of workers.values()){task.worker.terminate();task.reject(new Error('superseded'));}workers.clear();
+    clearTimeout(sliderTimeout);structuredController.discard();clearFit();for(const task of workers.values()){task.worker.terminate();task.reject(new Error('superseded'));}workers.clear();
     scienceVersion++;editVersion++;source=prepared.source;rooted=prepared.rooted;reduction=prepared.reduction;project=prepared.project;scientificLayout=prepared.scientificLayout;
-    history.clear();selected=new Set(project.selection??[]);qa=null;pendingReduction=false;desiredRecipe=null;unsaved=prepared.kind==='newick';view='organic';teacher.sync();
-    if(teacher.enabled)activateTeacherPanel();else setView('organic');render();fit();
+    history.clear();selected=new Set(project.selection??[]);qa=null;pendingReduction=false;desiredRecipe=null;unsaved=prepared.kind==='newick';view='organic';structuredController.sync();
+    if(structuredController.enabled)activateTeacherPanel();else setView('organic');render();fit();
 }
 function setView(next: 'organic' | 'scientific'): void {
   if(next!==view){qa=null;editVersion++;}
-  teacher.close();
+  structuredController.close();
   endDrag(true); commitOpacity(); clearFit(); designTool = 'edit'; drawingPoints = [];
   view = next; $('organic-view').classList.toggle('active', view === 'organic'); $('scientific-view').classList.toggle('active', view === 'scientific');
-  if (next === 'scientific') scientificLayout = generateLayout(rooted, reduction, project.presentation, 'scientific');
+  if (next === 'scientific') scientificLayout = generateLayout(rooted, reduction, project.presentation, 'scientific', project.layout);
   render();
 }
 function restoreHistory(direction: 'undo' | 'redo'): void {
-  if(teacher.pending){teacher.discard();render();return;}
+  if(structuredController.pending){structuredController.discard();render();return;}
   if (pendingFit || fitPreview) { clearFit(); render(); return; }
   endDrag(true); commitOpacity(); designTool = 'edit';
   if (pendingReduction) return;
   const restored = history[direction](project); if (!restored) return;
   project = restored; rooted = orient(source, project.recipe.root); reduction = reduce(source, rooted, project.recipe, true);
-  scienceVersion++; scientificLayout = generateLayout(rooted, reduction, project.presentation, 'scientific'); teacher.sync(); if(teacher.enabled)activateTeacherPanel(); invalidate(); render();fit();
+  scienceVersion++; scientificLayout = generateLayout(rooted, reduction, project.presentation, 'scientific', project.layout); structuredController.sync(); if(structuredController.enabled)activateTeacherPanel(); invalidate(); render();fit();
 }
 
 // Event delegation keeps controls stable across science and selection updates.
 document.querySelectorAll<HTMLButtonElement>('[data-panel]').forEach(tab => tab.addEventListener('click', () => {
-  if(tab.dataset.panel==='structured'){endDrag(true);clearFit();teacher.open();}else if(teacher.enabled)setView('organic');
+  if(tab.dataset.panel==='structured'){endDrag(true);clearFit();structuredController.open();}else if(structuredController.enabled)setView('organic');
   document.querySelectorAll<HTMLButtonElement>('[data-panel]').forEach(button => { const active = button === tab; button.classList.toggle('active', active); button.setAttribute('aria-selected', String(active)); $(`panel-${button.dataset.panel}`).hidden = !active; });
 }));
 function activateTeacherPanel():void{document.querySelectorAll<HTMLButtonElement>('[data-panel]').forEach(button=>{const active=button.dataset.panel==='structured';button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active));$(`panel-${button.dataset.panel}`).hidden=!active;});}
 on('teacher-example',async()=>{
-  if(pendingReduction||pendingFit||fitPreview||teacher.pending)throw new Error('Finish or discard the pending proposal before opening another project.');
+  if(pendingReduction||pendingFit||fitPreview||structuredController.pending)throw new Error('Finish or discard the pending proposal before opening another project.');
   if(unsaved){const state=snapshot();if(!hasAuthoring(state))throw new Error('Missing document.');download('before-sample-tree.treeproject.json',serializeProject(state,exportingBuild),'application/json');}
   const example=await sampleTree(exportingBuild);source=example.source;rooted=example.rooted;reduction=example.reduction;project=example.project;history.clear();selected.clear();qa=null;scienceVersion++;editVersion++;unsaved=false;desiredRecipe=null;
-  scientificLayout=generateLayout(rooted,reduction,project.presentation,'scientific');teacher.sync();teacher.open();activateTeacherPanel();render();fit();toast('New synthetic A–E sample opened. Its topology does not describe real organisms.');
+  scientificLayout=generateLayout(rooted,reduction,project.presentation,'scientific',project.layout);structuredController.sync();structuredController.open();activateTeacherPanel();render();fit();toast('New synthetic A–E sample opened. Its topology does not describe real organisms.');
 });
 on('teacher-class-example',async()=>{
-  if(pendingReduction||pendingFit||fitPreview||teacher.pending)throw new Error('Finish or discard the pending proposal before opening another project.');
+  if(pendingReduction||pendingFit||fitPreview||structuredController.pending)throw new Error('Finish or discard the pending proposal before opening another project.');
   if(unsaved){const state=snapshot();if(!hasAuthoring(state))throw new Error('Missing document.');download('before-classification-sample.treeproject.json',serializeProject(state,exportingBuild),'application/json');}
   const example=await classificationSample(exportingBuild);source=example.source;rooted=example.rooted;reduction=example.reduction;project=example.project;history.clear();selected.clear();qa=null;scienceVersion++;editVersion++;unsaved=false;desiredRecipe=null;
-  scientificLayout=generateLayout(rooted,reduction,project.presentation,'scientific');teacher.sync();teacher.open();teacher.setClassificationSpec(example.spec);activateTeacherPanel();render();fit();toast('Synthetic classification opened. Groups and ranks are invented; parent links do not assert ancestry.');
+  scientificLayout=generateLayout(rooted,reduction,project.presentation,'scientific',project.layout);structuredController.sync();structuredController.open();structuredController.setClassificationSpec(example.spec);activateTeacherPanel();render();fit();toast('Synthetic classification opened. Groups and ranks are invented; parent links do not assert ancestry.');
 });
-on('structured-view',()=>{endDrag(true);clearFit();teacher.open();activateTeacherPanel();});
+on('structured-view',()=>{endDrag(true);clearFit();structuredController.open();activateTeacherPanel();});
 on('organic-view', () => setView('organic')); on('scientific-view', () => setView('scientific'));
 on('make-artistic', () => { setView('organic'); mutate(() => { project.layout.mode = 'organic'; project.authoring!.viewName = 'Artistic arrangement'; }, false, { notes: 'Explicitly adopted legacy inspection coordinates as an artistic arrangement; no coordinates changed.' }); });
 on('fit-btn', fit); on('undo-btn', () => restoreHistory('undo')); on('redo-btn', () => restoreHistory('redo'));
@@ -443,7 +443,7 @@ for (const [id, key] of Object.entries({ 'page-width': 'widthMm', 'page-height':
     }
     project.presentation = next; validateLayout(project.layout, rooted, reduction); validateDesign(project.design, rooted);
     });
-    scientificLayout = generateLayout(rooted, reduction, next, 'scientific'); if (key === 'widthMm' || key === 'heightMm') fit();
+    scientificLayout = generateLayout(rooted, reduction, next, 'scientific', project.layout); if (key === 'widthMm' || key === 'heightMm') fit();
   }));
 }
 for (const id of ['allow-curves', 'fit-allow-curves']) input(id).addEventListener('change', () => guard(() => mutate(() => {
@@ -470,21 +470,21 @@ on('datasets-btn',()=>{
 $('dataset-choice').addEventListener('change',datasetDetails);
 on('close-datasets',()=>$<HTMLDialogElement>('datasets-dialog').close());
 on('open-dataset',async()=>{
-  if(importing||!ready||pendingReduction||pendingFit||fitPreview||teacher.pending)throw new Error('Finish or discard the current calculation/preview first.');
+  if(importing||!ready||pendingReduction||pendingFit||fitPreview||structuredController.pending)throw new Error('Finish or discard the current calculation/preview first.');
   const d=BUNDLED_DATASETS.find(d=>d.id===input('dataset-choice').value)!;
   const revision=currentRevision(),viewId=effectiveViewId(project as import('./model/document.ts').WorkingProject);importing=true;updateButtons();
   try {
     const response=await fetch(`/data/${d.file}`);if(!response.ok)throw new Error('Could not read the bundled local dataset.');
     const text=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(await response.arrayBuffer());
     const prepared=await prepareBundledDataset(d.id,text,exportingBuild);
-    if(!hasAuthoring(project)||!isCurrentResult(project,revision,viewId)||pendingReduction||pendingFit||fitPreview||teacher.pending)throw new Error('The current project changed while loading. Open the dataset again when ready.');
+    if(!hasAuthoring(project)||!isCurrentResult(project,revision,viewId)||pendingReduction||pendingFit||fitPreview||structuredController.pending)throw new Error('The current project changed while loading. Open the dataset again when ready.');
     installPrepared(prepared);$<HTMLDialogElement>('datasets-dialog').close();
     toast(`${d.shortCitation} opened: ${source.tips.length.toLocaleString()} source tips, ${reduction.frontier.length} overview endpoints. Search all source names in Reduce or Layout.`);
   } finally {importing=false;updateButtons();}
 });
 on('source-info-btn', () => {
   const count = Object.values(source.nodes).reduce((sum, x) => sum + x.annotations.length, 0);
-  $('source-detail').innerHTML = `<p>${source.tips.length.toLocaleString()} terminal identities · ${source.order.length.toLocaleString()} original nodes · ${count.toLocaleString()} preserved bracket annotations.</p><p><strong>Source SHA256</strong><br><code>${source.sha256}</code></p><p>${sourceAttributionMarkup()}</p><p><strong>${teacher.view?.scene.unrooted||teacher.view?.artistic?.baseScene.unrooted?'Stored traversal (unused by unrooted view)':project.authoring!.basis.relationshipKind==='classification'?'Legacy traversal (not classification parent orientation)':'Root assumption'}</strong><br>${esc(JSON.stringify(project.authoring!.root))}<br>Traversal: ${esc(JSON.stringify(project.recipe.root))}</p><details><summary>Full provenance metadata</summary><pre>${esc(JSON.stringify(project.provenance, null, 2))}</pre></details><section id="biological-root-controls"><h2>Change the biological root</h2><p>This separate scientific operation clears reduction rules and geometry. Dragging the drawn origin does not do this. The old state remains available through Undo.</p><div class="field-grid"><label>Source edge endpoint A<input id="root-a" value="${source.rootId}"></label><label>Source edge endpoint B<input id="root-b" value="${source.nodes[source.rootId].children[0] ?? ''}"></label></div><div class="field-grid"><label>Edge fraction<input id="root-fraction" type="number" min=".001" max=".999" step=".1" value=".5"></label></div><button id="apply-root" class="button">Declare root and reset arrangement</button></section>`;
+  $('source-detail').innerHTML = `<p>${source.tips.length.toLocaleString()} terminal identities · ${source.order.length.toLocaleString()} original nodes · ${count.toLocaleString()} preserved bracket annotations.</p><p><strong>Source SHA256</strong><br><code>${source.sha256}</code></p><p>${sourceAttributionMarkup()}</p><p><strong>${structuredController.view?.scene.unrooted||structuredController.view?.artistic?.baseScene.unrooted?'Stored traversal (unused by unrooted view)':project.authoring!.basis.relationshipKind==='classification'?'Legacy traversal (not classification parent orientation)':'Root assumption'}</strong><br>${esc(JSON.stringify(project.authoring!.root))}<br>Traversal: ${esc(JSON.stringify(project.recipe.root))}</p><details><summary>Full provenance metadata</summary><pre>${esc(JSON.stringify(project.provenance, null, 2))}</pre></details><section id="biological-root-controls"><h2>Change the biological root</h2><p>This separate scientific operation clears reduction rules and geometry. Dragging the drawn origin does not do this. The old state remains available through Undo.</p><div class="field-grid"><label>Source edge endpoint A<input id="root-a" value="${source.rootId}"></label><label>Source edge endpoint B<input id="root-b" value="${source.nodes[source.rootId].children[0] ?? ''}"></label></div><div class="field-grid"><label>Edge fraction<input id="root-fraction" type="number" min=".001" max=".999" step=".1" value=".5"></label></div><button id="apply-root" class="button">Declare root and reset arrangement</button></section>`;
   on('apply-root', () => {
     if (pendingReduction) throw new Error('Wait for the reduction to finish.');
     if (!semanticCapabilities({ status: 'rooted', basis: 'user-assumption', explanation: 'Proposed assumption', referenceIds: [] }, 'artistic', project.authoring!.edgeMeasure, project.authoring!.basis).canClaimAncestry) throw new Error('Describe a phylogenetic basis and entity type before declaring a biological root.');
@@ -494,9 +494,9 @@ on('source-info-btn', () => {
     project.authoring!.root = legacyRootState(project.recipe.root, source);
     for (const b of project.design?.borders ?? []) b.assignments = [];
     accepted(before, { kind: 'scientific', methods: ['root-orientation', 'maximal-frontier', 'organic-initializer'], replace: true, parameters: { root: next.root, recipe: project.recipe }, notes: 'Explicit rooting assumption and fresh arrangement.' });
-    designTool = 'edit'; selected.clear(); scientificLayout = generateLayout(rooted, reduction, project.presentation, 'scientific'); invalidate(); render(); $<HTMLDialogElement>('source-dialog').close(); toast('Biological root changed explicitly. Source splits and original edge identities are retained.');
+    designTool = 'edit'; selected.clear(); scientificLayout = generateLayout(rooted, reduction, project.presentation, 'scientific', project.layout); invalidate(); render(); $<HTMLDialogElement>('source-dialog').close(); toast('Biological root changed explicitly. Source splits and original edge identities are retained.');
   });
-  $('biological-root-controls').hidden=project.authoring!.basis.relationshipKind==='classification'||!!teacher.view?.scene.unrooted||!!teacher.view?.artistic?.baseScene.unrooted;
+  $('biological-root-controls').hidden=project.authoring!.basis.relationshipKind==='classification'||!!structuredController.view?.scene.unrooted||!!structuredController.view?.artistic?.baseScene.unrooted;
   $<HTMLButtonElement>('apply-root').disabled = project.authoring!.basis.relationshipKind !== 'phylogeny' || project.authoring!.basis.entityKind === 'unspecified';
   if (hasAuthoring(project)) $('source-detail').insertAdjacentHTML('beforeend', provenanceReport(project));
   $<HTMLDialogElement>('source-dialog').showModal();
@@ -521,7 +521,7 @@ $('basis-form').addEventListener('submit', event => {
   void guard(() => {
     try {
       if (!hasAuthoring(project)) throw new Error('Missing authoring state.');
-      if (pendingReduction || pendingFit || fitPreview || teacher.pending) throw new Error('Finish or discard the pending calculation/preview before editing the scientific basis.');
+      if (pendingReduction || pendingFit || fitPreview || structuredController.pending) throw new Error('Finish or discard the pending calculation/preview before editing the scientific basis.');
       const basis: ScientificBasis = structuredClone(project.authoring.basis);
       for (const [key,id] of Object.entries(basisFields)) {
         const value = input(id).value.trim();
@@ -704,7 +704,7 @@ function renderFitControls(): void {
     `<p class="${r.afterQA.status === 'checked' ? 'fit-good' : 'fit-warning'}">${r.afterQA.status === 'checked' ? 'Geometry checks passed at the current physical dimensions.' : 'Draft fit. Geometry or numbered-label checks still need attention.'} ${r.afterQA.annotationCollisions} numbered-label conflicts. Source coverage and connections preserved.</p>`;
 }
 async function previewAutomaticFit(): Promise<void> {
-  if (view !== 'organic') throw new Error('Switch to Organic before fitting.');
+  if (view !== 'organic') throw new Error('Switch to Free arrangement before fitting.');
   if (pendingReduction) throw new Error('Wait for the reduction to finish.');
   endDrag(true); commitOpacity(); clearFit(); designTool = 'edit';
   const settings = structuredClone(fitSettings()); validateFitSettings(settings);
@@ -784,7 +784,7 @@ on('discard-fit', () => { clearFit(); render(); toast('Fit discarded. Artwork un
 on('accept-fit', () => {
   const result = fitPreview; if (!result) return;
   const settings = structuredClone(fitSettings()), constraints = structuredClone(project.design ?? { borders: [], showBorders: true });
-  const evidence: CommandEvidence = { kind: 'layout', methods: ['junction-fit', ...((settings.routing ?? 0) > 0 ? ['route-search'] : [])], inputs: Object.keys(project.authoring!.provenance.heads).filter(key => key === 'source' || key === 'scientific' || key.startsWith(viewPrefix(project.authoring!.activeViewId))), parameters: { settings, borders: constraints.borders, activeBorderId: constraints.activeBorderId ?? null, pinnedNodes: project.layout.pinnedNodes, pinnedEdges: project.layout.pinnedEdges, presentation: project.presentation, lineStyle: project.layout.lineStyle ?? 'curved' }, result: { accepted: true, routingLimited: result.routingLimited, refinedRoutes: result.refinedRoutes, movedEndpoints: result.movedEndpoints, errorAfterMm: result.errorAfterMm, qaStatus: result.afterQA.status, directionConflicts: result.directionConflicts }, notes: 'Accepted fit; sampled-path objectives and transported bends consume existing geometry. Residual issues remain disclosed.' };
+  const evidence: CommandEvidence = { kind: 'layout', methods: fitMethodIds(result), inputs: Object.keys(project.authoring!.provenance.heads).filter(key => key === 'source' || key === 'scientific' || key.startsWith(viewPrefix(project.authoring!.activeViewId))), parameters: { settings, borders: constraints.borders, activeBorderId: constraints.activeBorderId ?? null, pinnedNodes: project.layout.pinnedNodes, pinnedEdges: project.layout.pinnedEdges, presentation: project.presentation, lineStyle: project.layout.lineStyle ?? 'curved' }, result: { accepted: true, routingLimited: result.routingLimited, routingDiagnostics: result.routingDiagnostics ?? null, refinedRoutes: result.refinedRoutes, movedEndpoints: result.movedEndpoints, errorAfterMm: result.errorAfterMm, qaStatus: result.afterQA.status, directionConflicts: result.directionConflicts }, notes: 'Accepted fit; sampled-path objectives and transported bends consume existing geometry. Residual issues remain disclosed.' };
   clearFit(); mutate(() => { project.layout = result.layout; design().fitSettings = settings; }, true, evidence); qa = result.afterQA; render();
   toast(`${result.afterQA.status === 'checked' ? 'Fit' : 'Draft fit'} applied. ${result.movedJunctions.length} junctions moved. Undo restores the previous arrangement.`);
 });
@@ -870,10 +870,10 @@ function canvasPoint(event: PointerEvent | WheelEvent): Point {
   const point = new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix.inverse()); return { x: point.x, y: point.y };
 }
 $('stage').addEventListener('pointerdown', event => {
-  if(teacher.enabled&&!spaceDown&&event.button!==1){
+  if(structuredController.enabled&&!spaceDown&&event.button!==1){
     if(event.button!==0)return;const element=event.target as Element,target=element.closest<HTMLElement>('[data-structured-node]'),waypoint=element.closest<HTMLElement>('[data-artistic-waypoint]');
     try{if(target||waypoint){const [node,index]=(waypoint?.dataset.artisticWaypoint??target!.dataset.structuredNode!).split(':');const kind=waypoint?'waypoint':target!.tagName.toLowerCase()==='text'?'label':'node';
-      if(teacher.beginArtisticPointer(node,kind,canvasPoint(event),event.shiftKey,Number(index??0)))$('stage').setPointerCapture(event.pointerId);else teacher.select(node,event.shiftKey);event.preventDefault();}}
+      if(structuredController.beginArtisticPointer(node,kind,canvasPoint(event),event.shiftKey,Number(index??0)))$('stage').setPointerCapture(event.pointerId);else structuredController.select(node,event.shiftKey);event.preventDefault();}}
     catch(error){toast(error instanceof Error?error.message:String(error),true);}return;
   }
   if (!ready || event.button > 1 || (event.target as Element).closest('#fit-preview-banner')) return;
@@ -909,7 +909,7 @@ $('stage').addEventListener('pointerdown', event => {
   $('stage').setPointerCapture(event.pointerId); event.preventDefault();
 });
 $('stage').addEventListener('pointermove', event => {
-  if(teacher.dragging){try{teacher.moveArtisticPointer(canvasPoint(event));}catch(error){teacher.endArtisticPointer(true);toast(error instanceof Error?error.message:String(error),true);}return;}
+  if(structuredController.dragging){try{structuredController.moveArtisticPointer(canvasPoint(event));}catch(error){structuredController.endArtisticPointer(true);toast(error instanceof Error?error.message:String(error),true);}return;}
   if (!drag) return; const point = canvasPoint(event), delta = sub(point, drag.last);
   if (!drag.moved && Math.hypot(point.x - drag.start.x, point.y - drag.start.y) < .08) return;
   drag.moved = true;
@@ -950,7 +950,7 @@ $('stage').addEventListener('pointermove', event => {
   drag.last = point; editVersion++; qa = null; renderCanvas();
 });
 function endDrag(cancel = false): void {
-  if(teacher.dragging){try{teacher.endArtisticPointer(cancel);}catch(error){toast(error instanceof Error?error.message:String(error),true);}}
+  if(structuredController.dragging){try{structuredController.endArtisticPointer(cancel);}catch(error){toast(error instanceof Error?error.message:String(error),true);}}
   if (!drag) return;
   const current = drag; drag = null;
   if (cancel) { if (current.before) project = current.before; }
@@ -980,7 +980,7 @@ function endDrag(cancel = false): void {
 $('stage').addEventListener('pointerup', () => endDrag()); $('stage').addEventListener('pointercancel', () => endDrag(true));
 $('stage').addEventListener('wheel', event => {
   if (!ready || (event.target as Element).closest('#fit-preview-banner')) return; event.preventDefault(); const point = canvasPoint(event), factor = Math.exp(Math.max(-.25, Math.min(.25, event.deltaY * .0015)));
-  if (viewBox.h * factor < 5 || viewBox.h * factor > (teacher.enabled?teacher.dimensions.heightMm:project.presentation.heightMm) * 8) return;
+  if (viewBox.h * factor < 5 || viewBox.h * factor > (structuredController.enabled?structuredController.dimensions.heightMm:project.presentation.heightMm) * 8) return;
   viewBox = { x: point.x + (viewBox.x - point.x) * factor, y: point.y + (viewBox.y - point.y) * factor, w: viewBox.w * factor, h: viewBox.h * factor };
   setViewBox(); $('zoom-label').textContent = `${Math.round(project.presentation.heightMm / viewBox.h * 100)}%`;
 }, { passive: false });
@@ -989,8 +989,8 @@ window.addEventListener('keydown', event => {
   const target = event.target as HTMLElement; if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable || !ready) return;
   if (event.code === 'Space') { spaceDown = true; event.preventDefault(); }
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); restoreHistory(event.shiftKey ? 'redo' : 'undo'); }
-  if (event.key === 'Escape') { teacher.discard(); clearFit(); setDesignTool('edit'); render(); }
-  if (!teacher.enabled && selected.size && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key) && view === 'organic' && designTool === 'edit') {
+  if (event.key === 'Escape') { structuredController.discard(); clearFit(); setDesignTool('edit'); render(); }
+  if (!structuredController.enabled && selected.size && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key) && view === 'organic' && designTool === 'edit') {
     event.preventDefault(); const d = event.shiftKey ? 1 : .1; void guard(() => mutate(() => moveNodes(project.layout, rooted, [...selected], { x: event.key === 'ArrowLeft' ? -d : event.key === 'ArrowRight' ? d : 0, y: event.key === 'ArrowUp' ? -d : event.key === 'ArrowDown' ? d : 0 })));
   }
 });
@@ -999,7 +999,7 @@ window.addEventListener('blur', () => { spaceDown = false; endDrag(true); });
 window.addEventListener('beforeunload', event => { if (unsaved) { event.preventDefault(); event.returnValue = ''; } });
 
 on('explore-view-btn', () => {
-  if (!ready || importing || pendingReduction || pendingFit || fitPreview || teacher.pending || teacher.preview) throw new Error('Finish or discard the current preview before exploring the source.');
+  if (!ready || importing || pendingReduction || pendingFit || fitPreview || structuredController.pending || structuredController.preview) throw new Error('Finish or discard the current preview before exploring the source.');
   explorer.open({source, root: project.recipe.root, childOrder: project.layout.childOrder, corrections: project.corrections, basis: project.authoring!.basis, rootState: project.authoring!.root, title: sourceHeading(source.sha256, project.provenance, project.authoring?.basis.name).title});
 });
 
@@ -1012,6 +1012,6 @@ async function initialize(): Promise<void> {
   const recipe: Recipe = { ...defaultRecipe(source), ...fixture }; rooted = orient(source, recipe.root); reduction = reduce(source, rooted, recipe, true);
   project = { format: 'phylogenetic-tree-studio', version: 1, appVersion: '0.1.0', title: 'The tree of life', sourceText: source.text, sourceSha256: source.sha256, provenance, corrections, recipe, layout: generateLayout(rooted, reduction, DEFAULT_PRESENTATION, 'organic'), presentation: structuredClone(DEFAULT_PRESENTATION) };
   syncRecipe(); project = startAuthoring(project, source, exportingBuild, 'new', ['newick-parser', 'maximal-frontier', 'organic-initializer']);
-  syncRecipe(); scientificLayout = generateLayout(rooted, reduction, project.presentation, 'scientific'); ready = true; $('loading').hidden = true; render(); fit();
+  syncRecipe(); scientificLayout = generateLayout(rooted, reduction, project.presentation, 'scientific', project.layout); ready = true; $('loading').hidden = true; render(); fit();
 }
 void initialize().catch(error => { $('loading').textContent = `Could not start: ${error.message}`; toast(error.message, true); });

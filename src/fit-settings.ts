@@ -1,4 +1,9 @@
-import type { BranchDirection, FitSettings, Point } from './types.ts';
+import type { BranchDirection, FitResult, FitSettings, Point } from './types.ts';
+
+/** Describe methods that actually ran, including fork-only optimization. */
+export function fitMethodIds(result: Pick<FitResult, 'routingDiagnostics'>): string[] {
+  return ['junction-fit', ...(result.routingDiagnostics?.attempts ? ['route-search'] : [])];
+}
 
 export const DEFAULT_FIT_SETTINGS: FitSettings = {
   algorithm: 'junction_fit_v1', borderScope: 'all', strength: 1,

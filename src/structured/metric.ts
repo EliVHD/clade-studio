@@ -1,7 +1,7 @@
 import type { Point } from '../types.ts';
 import type { DisplayGraph, MetricSpec, RenderScene, StructuredSettings, TextMeasurements, SceneQA } from './types.ts';
 import { primitivePoints, labelCorners, sceneRevision } from './layout.ts';
-import { coordinateScene } from './coordinates.ts';
+import { buildSceneFromDepthCoordinates } from './coordinates.ts';
 import { validateScene, polygonsOverlap, segmentDistance } from './validate.ts';
 import { digestSync } from '../provenance/sync-identity.ts';
 import { HUG_SHA } from '../science.ts';
@@ -31,30 +31,31 @@ export function layoutMetric(graph:DisplayGraph,settings:StructuredSettings,meas
   const barMetric=measurements.scaleBar;
   if(!barMetric||barMetric.text!==scaleBarText(spec)||[barMetric.widthMm,barMetric.ascentMm,barMetric.descentMm].some(n=>!Number.isFinite(n)||n<0||n>100000)||barMetric.ascentMm+barMetric.descentMm<=0||['advanceMm','leftMm','rightMm'].some(key=>{const n=barMetric[key as keyof typeof barMetric];return n!==undefined&&(typeof n!=='number'||!Number.isFinite(n)||Math.abs(n)>100000);}))throw new Error('Measure the scale-bar label along with the terminal labels.');
   if(Math.max(...Object.values(distances))*spec.mmPerUnit>100000||spec.mmPerUnit*spec.scaleBarValue>100000)throw new Error('Physical metric coordinates exceed 100,000 mm. Reduce mm per source unit.');
-  const scene=coordinateScene(graph,settings,measurements,distances,spec.mmPerUnit,nodes,labels),s=scene.settings;
+  const scene=buildSceneFromDepthCoordinates(graph,settings,measurements,distances,spec.mmPerUnit,nodes,labels),s=scene.settings;
   const from={x:s.marginMm,y:s.heightMm-s.marginMm/2},to={x:s.marginMm+spec.mmPerUnit*spec.scaleBarValue,y:from.y},position={x:from.x,y:from.y-s.labelGapMm-1};
   const scaleBar={value:spec.scaleBarValue,from,to,label:scaleBarText(spec),position,corners:labelCorners(position,0,'start',barMetric)};
   const points=[...scaleBar.corners,{x:from.x,y:from.y-1},{x:to.x,y:to.y+1},{x:scene.bounds.minX,y:scene.bounds.minY},{x:scene.bounds.maxX,y:scene.bounds.maxY}];
   scene.bounds=box(points);scene.metric={spec:structuredClone(spec),distances,scaleBar};scene.revision=sceneRevision(scene);return scene;
 }
-export function validateMetricScene(graph:DisplayGraph,scene:RenderScene):SceneQA{
-  const qa=validateScene(graph,scene),metric=scene.metric;if(!metric)throw new Error('A phylogram must retain its distance encoding and scale guide.');
+export function validateMetricScene(graph:DisplayGraph,scene:RenderScene,baseValidator:typeof validateScene=validateScene):SceneQA{
+  const qa=baseValidator(graph,scene),metric=scene.metric;if(!metric)throw new Error('A phylogram must retain its distance encoding and scale guide.');
   validateMetricSpec(metric.spec,graph.sourceSha256);const distances=metricDistances(graph),s=scene.settings,k=metric.spec.mmPerUnit,center={x:s.widthMm/2,y:s.heightMm/2},a=s.orientationDeg*Math.PI/180;
   const coordinate=(p:Point)=>s.kind==='rectangular'?((p.x-center.x)*Math.cos(a)+(p.y-center.y)*Math.sin(a)+center.x-s.marginMm)/k:(Math.hypot(p.x-center.x,p.y-center.y)-s.innerRadiusMm)/k;
   const tolerance=(d:number)=>1e-8/k+1e-9*Math.max(1,Math.abs(d));
-  const issue=(ids:string[],detail:string)=>{qa.status='draft';if(qa.issues.length<200)qa.issues.push({type:'legibility',ids,detail});else qa.omittedIssueCount++;};
+  const issue=(ids:string[],detail:string)=>{qa.status='draft';if(qa.issueCounts)qa.issueCounts.legibility++;if(qa.issues.length<200)qa.issues.push({type:'legibility',ids,detail});else qa.omittedIssueCount++;};
   if(digestSync(distances)!==digestSync(metric.distances)||scene.junctionGlyphs.some(g=>Math.abs(coordinate(g.anchor)-distances[g.nodeId])>tolerance(distances[g.nodeId]))||scene.ports.some(p=>Math.abs(coordinate(p.point)-distances[p.nodeId])>tolerance(distances[p.nodeId])))throw new Error('Metric coordinates do not encode the exact source distances.');
   if(Math.abs(Math.hypot(metric.scaleBar.to.x-metric.scaleBar.from.x,metric.scaleBar.to.y-metric.scaleBar.from.y)-metric.spec.scaleBarValue*k)>1e-7||metric.scaleBar.label!==scaleBarText(metric.spec))throw new Error('The scale guide disagrees with the declared physical scale.');
   const zero=Object.values(graph.edges).filter(e=>e.length===0);if(zero.length)issue(zero.slice(0,10).map(e=>`stem-${e.child}`),`${zero.length} zero-length source paths retain coincident metric positions. No positive length was invented; visual separation needs review.`);
   // Keep historical compound QA unchanged. Check the new guide explicitly.
   const bar=metric.scaleBar,guideSegments:[Point,Point][]=[[bar.from,bar.to],[{x:bar.from.x,y:bar.from.y-1},{x:bar.from.x,y:bar.from.y+1}],[{x:bar.to.x,y:bar.to.y-1},{x:bar.to.x,y:bar.to.y+1}]],boundary=segments([...bar.corners,bar.corners[0]]);
-  if(guideSegments.some(([p,q])=>polygonsOverlap(bar.corners,[p,q,q,p])||boundary.some(([r,t])=>segmentDistance(p,q,r,t).distance<=s.strokeMm/2+s.toleranceMm))){qa.labelCollisions++;issue(['metric-scale-guide','metric-scale-label'],'The measured scale label overlaps its guide. Increase the label gap.');}
+  if(guideSegments.some(([p,q])=>polygonsOverlap(bar.corners,[p,q,q,p])||boundary.some(([r,t])=>segmentDistance(p,q,r,t).distance<=s.strokeMm/2+s.toleranceMm))){qa.labelCollisions++;if(qa.issueCounts)qa.issueCounts.labels++;issue(['metric-scale-guide','metric-scale-label'],'The measured scale label overlaps its guide. Increase the label gap.');}
   let work=12;
   const guideLabelHit=(points:Point[])=>segments(points).some(([p,q])=>polygonsOverlap(bar.corners,[p,q,q,p])||boundary.some(([r,t])=>segmentDistance(p,q,r,t).distance<=s.strokeMm/2+s.toleranceMm));
   for(const shape of [...scene.junctionGlyphs.map(g=>({id:g.id,geometry:g.geometry})),...scene.edgeStems.map(e=>({id:e.id,geometry:e.geometry}))]){
-    const points=primitivePoints(shape.geometry,s.toleranceMm);work+=points.length*7;if(work>500000){qa.limited=true;issue([],'Scale-guide checks reached their 500,000-segment-comparison budget; no all-clear is asserted.');break;}
-    if(guideLabelHit(points)||segments(points).some(([p,q])=>guideSegments.some(([r,t])=>segmentDistance(p,q,r,t).distance<=s.strokeMm+s.clearanceMm+2*s.toleranceMm))){qa.labelCollisions++;issue([shape.id],'The scale guide intersects or crowds a tree stroke. Increase page height/margins or change the explicit metric scale.');}
+    const points=primitivePoints(shape.geometry,s.toleranceMm);work+=points.length*7;if(work>500000){qa.limited=true;if(qa.completeness){qa.completeness.strokes=false;qa.completeness.labels=false;qa.crossingPassed=false;qa.clearancePassed=false;}issue([],'Scale-guide checks reached their 500,000-segment-comparison budget; no all-clear is asserted.');break;}
+    if(guideLabelHit(points)||segments(points).some(([p,q])=>guideSegments.some(([r,t])=>segmentDistance(p,q,r,t).distance<=s.strokeMm+s.clearanceMm+2*s.toleranceMm))){qa.labelCollisions++;if(qa.issueCounts)qa.issueCounts.labels++;issue([shape.id],'The scale guide intersects or crowds a tree stroke. Increase page height/margins or change the explicit metric scale.');}
   }
-  for(const label of scene.labels){work+=label.corners.length*guideSegments.length;if(work>500000){qa.limited=true;issue([],'Scale-guide checks reached their 500,000-segment-comparison budget; no all-clear is asserted.');break;}if(polygonsOverlap(label.corners,bar.corners)||guideSegments.some(([p,q])=>polygonsOverlap(label.corners,[p,q,q,p])||segments([...label.corners,label.corners[0]]).some(([r,t])=>segmentDistance(p,q,r,t).distance<=s.strokeMm/2+s.toleranceMm))){qa.labelCollisions++;issue([label.id],'A terminal label overlaps the scale guide. Adjust its offset or the page dimensions.');}}
+  for(const label of scene.labels){work+=label.corners.length*guideSegments.length;if(work>500000){qa.limited=true;if(qa.completeness)qa.completeness.labels=false;issue([],'Scale-guide checks reached their 500,000-segment-comparison budget; no all-clear is asserted.');break;}if(polygonsOverlap(label.corners,bar.corners)||guideSegments.some(([p,q])=>polygonsOverlap(label.corners,[p,q,q,p])||segments([...label.corners,label.corners[0]]).some(([r,t])=>segmentDistance(p,q,r,t).distance<=s.strokeMm/2+s.toleranceMm))){qa.labelCollisions++;if(qa.issueCounts)qa.issueCounts.labels++;issue([label.id],'A terminal label overlaps the scale guide. Adjust its offset or the page dimensions.');}}
+  if(qa.work!==undefined)qa.work+=Math.min(work,500000);
   qa.limitations=['Phylogram: cumulative source distance is encoded by the rectangular axis or radius. Connector length and the inner hole carry no distance; lengths do not establish elapsed time.',`Logical coordinate tolerance: 1e-8 mm absolute plus 1e-9 relative; SVG coordinate rounding tolerance: 1e-6 mm. Units: ${metric.spec.measure.unit}; evidence is ${metric.spec.measure.declaration}.`,...qa.limitations.filter(l=>!l.startsWith('Nonmetric cladogram:'))];return qa;
 }

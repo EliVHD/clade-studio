@@ -3,7 +3,7 @@ import type { DisplayGraph, Primitive, RenderScene, SceneLabel, StructuredSettin
 import { layoutCluster, polar, rotatePoint, primitivePoints, labelCorners, sceneRevision } from './layout.ts';
 const exact=(object:object,keys:string[])=>!!object&&!Array.isArray(object)&&Object.keys(object).sort().join('|')===keys.sort().join('|');
 /** Shared geometry only. Callers determine the meaning of the depth coordinate. */
-export function coordinateScene(graph:DisplayGraph,settings:StructuredSettings,measurements:TextMeasurements,positions:Record<string,number>,scale:number,nodes:RenderScene['nodeOffsets']={},labels:RenderScene['labelOffsets']={}):RenderScene{
+export function buildSceneFromDepthCoordinates(graph:DisplayGraph,settings:StructuredSettings,measurements:TextMeasurements,positions:Record<string,number>,scale:number,nodes:RenderScene['nodeOffsets']={},labels:RenderScene['labelOffsets']={}):RenderScene{
   // Reuse only the existing ordered slots/sectors; replace every depth coordinate.
   if(!Number.isFinite(settings.innerRadiusMm)||settings.innerRadiusMm<0||settings.innerRadiusMm>1000)throw new Error('Inner radius is outside its supported range.');
   const base=layoutCluster(graph,{...settings,innerRadiusMm:0,orientationDeg:0},measurements,nodes,{}),s={...base.settings,innerRadiusMm:settings.innerRadiusMm,orientationDeg:((settings.orientationDeg%360)+360)%360};
