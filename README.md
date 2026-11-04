@@ -1,5 +1,9 @@
 # Clade Studio
 
+> **Maintenance status:** This project is **not actively maintained**. I may work on it sporadically, if at all. If you want to improve it or need ongoing maintenance, please **fork the repository** and continue development in your fork.
+>
+> Original software is licensed under **0BSD**. Bundled datasets and other third-party material retain their own licenses; please respect their license and attribution requirements. See [REDISTRIBUTION.md](REDISTRIBUTION.md).
+
 **Turn a tree into an editable, source-aware drawing.**
 
 Clade Studio is a local browser app for designing phylogenetic trees and supplied classification hierarchies. Import a Newick tree, select organisms or groups, choose a layout, refine the drawing and export SVG artwork together with its sources and methods. It is designed for teachers and anyone preparing tree figures for their own materials.
@@ -92,6 +96,8 @@ Editing reference images are omitted from artwork SVGs but remain embedded in sa
 ## Development
 
 The app uses TypeScript and browser SVG, with **no third-party runtime packages**. Build tools are locked in `package-lock.json`.
+
+Repository guidance for coding agents is in [AGENTS.md](AGENTS.md).
 
 | Command | Purpose |
 | --- | --- |

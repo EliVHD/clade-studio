@@ -1,5 +1,9 @@
 # Clade Studio
 
+> **Maintenance status:** This project is **not actively maintained**. I may work on it sporadically, if at all. If you want to improve it or need ongoing maintenance, please **fork the repository** and continue development in your fork.
+>
+> Original software is licensed under **0BSD**. Bundled datasets and other third-party material retain their own licenses; please respect their license and attribution requirements. See [REDISTRIBUTION.md](REDISTRIBUTION.md).
+
 A local browser app for turning supplied phylogenetic trees and classification hierarchies into editable drawings with sources and methods attached. Import Newick, select organisms or groups, choose a layout, refine and export SVG artwork.
 
 The app runs locally without accounts, a backend or file uploads. Relationships come from the supplied tree; there is no online organism lookup or relationship inference. Version 0.1.0 is the first release.

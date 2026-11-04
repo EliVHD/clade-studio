@@ -23,11 +23,13 @@
         "Local workflow completion: original import staging and offline authoring guide; no new external code, data, fonts or services.",
         "Offline dataset library: original chooser, exact-hash metadata, exhaustive bounded overview, protected citations and source-dependent header. Upstream tree data separately reviewed below; no new runtime dependency or online service.",
         "Adaptive Explore: original compact source index, stable nonmetric geometry, viewport detail selection and SVG rendering. OneZoom/Taxonium papers are conceptual background only; no upstream code, document, figure, dependency or new data included.",
-        "First-release preparation: original changelog, maintainer release instructions and v0.1.0 release notes. Selected UI screenshots are repository documentation only; browser/source release archives remain image-free."
+        "First-release preparation: original changelog, maintainer release instructions and v0.1.0 release notes. Selected UI screenshots are repository documentation only; browser/source release archives remain image-free.",
+        "Repository agent guidance: original development instructions in AGENTS.md, distributed with source packages under 0BSD."
       ],
       "obligations": [],
       "files": [
         ".gitignore",
+        "AGENTS.md",
         "CHANGELOG.md",
         "LICENSE",
         "REDISTRIBUTION.md",
