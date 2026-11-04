@@ -6,6 +6,7 @@ import { layoutClassification } from './classification.ts';
 import { layoutMetric } from './metric.ts';
 import { validateScene } from './validate.ts';
 import { digestSync } from '../provenance/sync-identity.ts';
+import { CURRENT_VALIDATION_PROFILE } from './validation-profile.ts';
 
 const point = (p:Point) => !!p && Object.keys(p).sort().join('|')==='x|y' && Number.isFinite(p.x) && Number.isFinite(p.y) && Math.abs(p.x)<=2000 && Math.abs(p.y)<=2000;
 const exact = (object:object,keys:string[]) => !!object && !Array.isArray(object) && Object.keys(object).sort().join('|')===keys.sort().join('|');
@@ -60,15 +61,16 @@ export function replayArtistic(graph:DisplayGraph,base:RenderScene,edits:Artisti
 }
 export function makeArtisticCopy(original:StructuredView,id:string,name:string):StructuredView {
   if(!['clade-cluster-v1','metric-distance-v1','classification-rank-v1','unrooted-angle-v1'].includes(original.adapter))throw new Error('Select a structured layout to create an artistic copy.');
-  const copy=structuredClone(original);copy.id=id;copy.name=name;copy.intent='artistic';copy.adapter='compound-artistic-v1';
+  const copy=structuredClone(original);copy.id=id;copy.name=name;copy.intent='artistic';copy.adapter='compound-artistic-v1';copy.validationProfile=CURRENT_VALIDATION_PROFILE;
   copy.artistic={viewId:original.id,sceneRevision:original.scene.revision,baseScene:structuredClone(original.scene),edits:[]};
   // Tree geometry stays exact; a metric origin loses only the active scale guide and claim.
-  if(original.scene.unrooted||original.scene.metric||original.scene.classification){copy.scene=replayArtistic(copy.graph,copy.artistic.baseScene,[]);copy.qa=validateScene(copy.graph,copy.scene);}
+  if(original.scene.unrooted||original.scene.metric||original.scene.classification)copy.scene=replayArtistic(copy.graph,copy.artistic.baseScene,[]);
+  copy.qa=validateScene(copy.graph,copy.scene);
   return copy;
 }
 export function applyArtisticEdit(view:StructuredView,edit:ArtisticEdit):StructuredView {
   if(view.adapter!=='compound-artistic-v1'||!view.artistic)throw new Error('Create or select an artistic copy first.');
-  const next=structuredClone(view);next.artistic!.edits.push(structuredClone(edit));next.scene=replayArtistic(next.graph,next.artistic!.baseScene,next.artistic!.edits);next.qa=validateScene(next.graph,next.scene);return next;
+  const next=structuredClone(view);next.validationProfile=CURRENT_VALIDATION_PROFILE;next.artistic!.edits.push(structuredClone(edit));next.scene=replayArtistic(next.graph,next.artistic!.baseScene,next.artistic!.edits);next.qa=validateScene(next.graph,next.scene);return next;
 }
 export function validateArtistic(view:StructuredView,source?:Source):RenderScene {
   const origin=view.artistic;

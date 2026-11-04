@@ -68,6 +68,7 @@ export type FitResult = {
   fixedJunctions: number; errorBeforeMm: number; errorAfterMm: number; crowdedJunctionPairs: number;
   directedEdges: number; directionConflicts: number;
   refinedRoutes: number; routingLimited: boolean;
+  routingDiagnostics?: import('./routing.ts').RoutingDiagnostics;
 };
 export type Project = {
   format: 'phylogenetic-tree-studio'; version: 1; appVersion: '0.1.0'; title: string;

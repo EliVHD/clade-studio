@@ -1,35 +1,45 @@
 import type { DisplayGraph, RenderScene, SceneQA, StructuredSettings, TextMeasurements } from './types.ts';
 import { layoutCluster } from './layout.ts';
 import { validateScene } from './validate.ts';
+import { sceneChecksComplete, sceneIssueCount } from './qa-summary.ts';
 
 export type ReadabilityPolicy = 'keep-page' | 'grow-page';
 export type ReadabilityResult = {
   scene: RenderScene; qa: SceneQA;
-  readability: { policy: ReadabilityPolicy; candidates: number; improved: boolean; before: ReturnType<typeof summary>; after: ReturnType<typeof summary>; };
+  readability: { policy: ReadabilityPolicy; candidates: number; improved: boolean; before: ReturnType<typeof summarizeReadability>; after: ReturnType<typeof summarizeReadability>; };
 };
-function summary(scene: RenderScene, qa: SceneQA) {
+function summarizeReadability(scene: RenderScene, qa: SceneQA) {
   return { widthMm: scene.settings.widthMm, heightMm: scene.settings.heightMm, outerRadiusMm: scene.settings.outerRadiusMm,
-    labelCollisions: qa.labelCollisions, contacts: qa.issues.filter(i => i.type === 'contact').length,
-    clearanceIssues: qa.issues.filter(i => i.type === 'clearance').length, limited: qa.limited, status: qa.status };
+    labelCollisions: qa.labelCollisions, contacts: sceneIssueCount(qa, 'contact'),
+    clearanceIssues: sceneIssueCount(qa, 'clearance'), limited: !sceneChecksComplete(qa),
+    labelsComplete: qa.completeness?.labels ?? !qa.limited, status: qa.status };
 }
-function score(scene: RenderScene, qa: SceneQA): number[] {
+function rankReadabilityScene(scene: RenderScene, qa: SceneQA): number[] {
   const s = scene.settings, b = scene.bounds;
   const overflow = Math.max(0, s.marginMm - b.minX + s.strokeMm / 2) + Math.max(0, s.marginMm - b.minY + s.strokeMm / 2)
     + Math.max(0, b.maxX + s.strokeMm / 2 - s.widthMm + s.marginMm) + Math.max(0, b.maxY + s.strokeMm / 2 - s.heightMm + s.marginMm);
-  return [Number(!qa.coveragePassed || !qa.incidencePassed), Number(qa.limited), Number(!qa.crossingPassed),
-    qa.issues.filter(i => i.type === 'contact').length, qa.labelCollisions, Number(!qa.clearancePassed),
-    qa.issues.filter(i => i.type === 'clearance').length, overflow, s.widthMm * s.heightMm, s.outerRadiusMm];
+  return [Number(!qa.coveragePassed || !qa.incidencePassed), Number(!sceneChecksComplete(qa)), Number(!qa.crossingPassed),
+    sceneIssueCount(qa, 'contact'), qa.labelCollisions, Number(!qa.clearancePassed),
+    sceneIssueCount(qa, 'clearance'), overflow, s.widthMm * s.heightMm, s.outerRadiusMm];
 }
-function better(a: number[], b: number[]): boolean {
+function isBetterReadabilityScore(a: number[], b: number[]): boolean {
   for (let i = 0; i < a.length; i++) if (Math.abs(a[i] - b[i]) > 1e-7) return a[i] < b[i];
   return false;
 }
-function fitPage(graph: DisplayGraph, settings: StructuredSettings, metrics: TextMeasurements, nodes: RenderScene['nodeOffsets'], labels: RenderScene['labelOffsets']): RenderScene {
+function fitsReadabilityMargins(scene: RenderScene): boolean {
+  const s = scene.settings, b = scene.bounds, epsilon = 1e-7;
+  return b.minX >= s.marginMm - epsilon && b.minY >= s.marginMm - epsilon
+    && b.maxX <= s.widthMm - s.marginMm + epsilon && b.maxY <= s.heightMm - s.marginMm + epsilon;
+}
+function fitReadabilityPage(graph: DisplayGraph, settings: StructuredSettings, metrics: TextMeasurements, nodes: RenderScene['nodeOffsets'], labels: RenderScene['labelOffsets']): RenderScene {
   let scene = layoutCluster(graph, settings, metrics, nodes, labels);
   // Enlarging a circular page translates its centre; remeasure actual rotated boxes.
   // Rectangular orientation can couple both dimensions, so stop after four passes.
   for (let pass = 0; pass < 4; pass++) {
     const s = scene.settings, b = scene.bounds, margin = s.marginMm + s.strokeMm / 2 + .1;
+    // Existing rectangular anchors sit on the declared margin. Growing the page
+    // cannot change that left edge, and previously added a millimetre every pass.
+    if (fitsReadabilityMargins(scene)) break;
     const widthMm = Math.min(2000, Math.ceil(Math.max(s.widthMm, 2 * Math.max(s.widthMm / 2 - b.minX, b.maxX - s.widthMm / 2) + 2 * margin)));
     const heightMm = Math.min(2000, Math.ceil(Math.max(s.heightMm, 2 * Math.max(s.heightMm / 2 - b.minY, b.maxY - s.heightMm / 2) + 2 * margin)));
     if (widthMm === s.widthMm && heightMm === s.heightMm) break;
@@ -42,9 +52,9 @@ export function improveReadability(graph: DisplayGraph, settings: StructuredSett
   policy: ReadabilityPolicy, nodes: RenderScene['nodeOffsets'] = {}, labels: RenderScene['labelOffsets'] = {}): ReadabilityResult {
   if (!['keep-page', 'grow-page'].includes(policy)) throw new Error('Unknown readability page policy.');
   const baseline = layoutCluster(graph, settings, metrics, nodes, labels), beforeQA = validateScene(graph, baseline);
-  let scene = baseline, qa = beforeQA, best = score(scene, qa), candidates = 1;
+  let scene = baseline, qa = beforeQA, best = rankReadabilityScene(scene, qa), candidates = 1;
   const initialOverflow = best[7];
-  if (best.slice(0, 8).every(v => v === 0)) return { scene, qa, readability: { policy, candidates, improved: false, before: summary(baseline, beforeQA), after: summary(scene, qa) } };
+  if (best.slice(0, 7).every(v => v === 0) && sceneIssueCount(qa, 'bounds') === 0 && fitsReadabilityMargins(scene)) return { scene, qa, readability: { policy, candidates, improved: false, before: summarizeReadability(baseline, beforeQA), after: summarizeReadability(scene, qa) } };
   const seen = new Set([JSON.stringify(baseline.settings)]);
   // Include a smaller radius for fixed pages with labels outside the page, and
   // larger radii for crowding. At most eight distinct, fully validated candidates.
@@ -65,14 +75,17 @@ export function improveReadability(graph: DisplayGraph, settings: StructuredSett
       s.heightMm = Math.min(2000, Math.max(s.heightMm, Math.ceil(minimumHeight)));
       s.widthMm = Math.min(2000, settings.widthMm * factor);
     } else continue;
-    const candidate = policy === 'grow-page' ? fitPage(graph, s, metrics, nodes, labels) : layoutCluster(graph, s, metrics, nodes, labels);
+    const candidate = policy === 'grow-page' ? fitReadabilityPage(graph, s, metrics, nodes, labels) : layoutCluster(graph, s, metrics, nodes, labels);
     const key = JSON.stringify(candidate.settings); if (seen.has(key)) continue; seen.add(key); candidates++;
-    const checked = validateScene(graph, candidate), rank = score(candidate, checked);
+    const checked = validateScene(graph, candidate), rank = rankReadabilityScene(candidate, checked);
+    // Partial totals are lower bounds, not comparable quality measurements. Keep
+    // the original unless a candidate completes all checks on its actual geometry.
+    if (!sceneChecksComplete(checked)) continue;
     if (policy === 'keep-page' && rank[7] > initialOverflow + 1e-7) continue;
-    if (better(rank, best)) { scene = candidate; qa = checked; best = rank; }
+    if (isBetterReadabilityScore(rank, best)) { scene = candidate; qa = checked; best = rank; }
     if (best.slice(0, 8).every(v => v === 0)) break;
   }
-  return { scene, qa, readability: { policy, candidates, improved: scene.revision !== baseline.revision, before: summary(baseline, beforeQA), after: summary(scene, qa) } };
+  return { scene, qa, readability: { policy, candidates, improved: scene.revision !== baseline.revision, before: summarizeReadability(baseline, beforeQA), after: summarizeReadability(scene, qa) } };
 }
 
 /** Translate issue identities to selectable biological owners and physical focus bounds. */

@@ -15,7 +15,7 @@ export async function prepareLocalImport(text:string,filename:string,build:Build
     const json=JSON.parse(text);
     if(json.format==='phylogenetic-tree-studio') {
       const loaded=await loadAnyProject(text,build);
-      return {...loaded,kind:'project',scientificLayout:generateLayout(loaded.rooted,loaded.reduction,loaded.project.presentation,'scientific')};
+      return {...loaded,kind:'project',scientificLayout:generateLayout(loaded.rooted,loaded.reduction,loaded.project.presentation,'scientific',loaded.project.layout)};
     }
     if(json.algorithm!=='maximal_frontier_v1')throw new Error('This JSON file is not a project or a reduction recipe.');
     const recipe:Recipe={...defaultRecipe(current.source),...json},rooted=orient(current.source,recipe.root);reduce(current.source,rooted,recipe,true);
@@ -53,5 +53,5 @@ async function prepareNewick(text:string,filename:string,build:BuildInfo|null,ex
   const provenance=dataset?{filename,datasetId:dataset.id,release:dataset.release,sourceUrl:dataset.sourceUrl,license:dataset.license,licenseUrl:dataset.licenseUrl,attribution:dataset.references,modifications:dataset.changes,limitations:dataset.limitations,overview:'Explicit collapsed groups; all original tips retained. Search the full source in Reduce or Layout.'}:{filename,importedAt:new Date().toISOString(),license:'Not supplied',modifications:'Imported without changing source bytes.'};
   const legacy:Project={format:'phylogenetic-tree-studio',version:1,appVersion:'0.1.0',title:dataset?.name??(filename.replace(/\.[^.]+$/,'')||'Imported tree'),sourceText:text,sourceSha256:source.sha256,provenance,corrections:[],recipe,layout:generateLayout(rooted,reduction,DEFAULT_PRESENTATION,'organic'),presentation:structuredClone(DEFAULT_PRESENTATION)};
   const project=startAuthoring(legacy,source,build,'new',['newick-parser',...(dataset?['bounded-overview']:[]),'maximal-frontier','organic-initializer']);
-  return {kind:'newick',project,source,rooted,reduction,scientificLayout:generateLayout(rooted,reduction,project.presentation,'scientific'),migrated:false};
+  return {kind:'newick',project,source,rooted,reduction,scientificLayout:generateLayout(rooted,reduction,project.presentation,'scientific',project.layout),migrated:false};
 }

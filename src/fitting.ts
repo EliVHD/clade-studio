@@ -2,7 +2,7 @@ import type { Design, FitResult, FitSettings, Layout, Point, Presentation, Reduc
 import { add, sub, distance, lerp, edgeWidth } from './geometry.ts';
 import { borderTargets, validateDesign } from './design.ts';
 import { validateFitSettings, directionVector } from './fit-settings.ts';
-import { refineRouting, spreadForks } from './routing.ts';
+import { refineRouting } from './routing.ts';
 
 const times = (p: Point, k: number): Point => ({ x: p.x * k, y: p.y * k });
 const unit = (p: Point): Point => times(p, 1 / (Math.hypot(p.x, p.y) || 1));
@@ -153,9 +153,8 @@ export function fitSilhouette(rooted: Rooted, reduction: Reduction, base: Layout
   // is exactly halfway to the same solution, rather than running a different search.
   const full = settings.strength ? warpLayout(rooted, reduction, base, positions, mobile, { ...settings, strength: 1 }, flows) : structuredClone(base);
   const eligible = new Set(edges.filter(id => !base.pinnedEdges.includes(id) && stats[id].assigned === stats[id].count && (mobile.has(id) || mobile.has(rooted.nodes[id].parent!))));
-  let routing = { refinedRoutes: 0, routingLimited: false };
+  let routing: ReturnType<typeof refineRouting> = { refinedRoutes: 0, routingLimited: false, routingDiagnostics: { work: 0, candidateVisits: 0, candidatePairs: 0, evaluations: 0, attempts: 0, accepted: 0, attemptedItems: {} } };
   if (settings.strength) {
-    spreadForks(rooted, reduction, full, eligible, settings.forkSpread ?? 0, flows);
     routing = refineRouting(rooted, reduction, full, p, junctions, eligible, settings, flows);
   }
   const layout = full;

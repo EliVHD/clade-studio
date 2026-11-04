@@ -108,8 +108,8 @@ export function layoutUnrooted(graph:DisplayGraph,settings:StructuredSettings,me
   const points=[...Object.values(anchors),...labels.flatMap(l=>l.corners)],bounds=points.reduce((b,p)=>({minX:Math.min(b.minX,p.x),minY:Math.min(b.minY,p.y),maxX:Math.max(b.maxX,p.x),maxY:Math.max(b.maxY,p.y)}),{minX:Infinity,minY:Infinity,maxX:-Infinity,maxY:-Infinity});
   const scene:RenderScene={units:'mm',revision:'',graphRevision:digestSync(graph),settings:s,measurements:structuredClone(measurements),junctionGlyphs:glyphs,edgeStems:stems,ports,labels,nodeOffsets:{},...(Object.keys(labelOffsets).length?{labelOffsets:structuredClone(labelOffsets)}:{}),bounds,slotPasses:1,unrooted:{spec:structuredClone(spec),displayOriginNodeId:graph.rootId,daylight:report}};scene.revision=sceneRevision(scene);return scene;
 }
-export function validateUnrootedScene(graph:DisplayGraph,scene:RenderScene){
-  const qa=validateScene(graph,scene),encoding=scene.unrooted;if(!encoding)throw new Error('Missing unrooted specification.');
+export function validateUnrootedScene(graph:DisplayGraph,scene:RenderScene,baseValidator:typeof validateScene=validateScene){
+  const qa=baseValidator(graph,scene),encoding=scene.unrooted;if(!encoding)throw new Error('Missing unrooted specification.');
   validateUnrootedSpec(encoding.spec,graph.sourceSha256);
   if(encoding.displayOriginNodeId!==graph.rootId||scene.metric||scene.classification)throw new Error('Unrooted display origin/encoding mismatch.');
   for(const stem of scene.edgeStems){if(stem.geometry.kind!=='polyline'||stem.geometry.points.length!==2)throw new Error('Unrooted stems must be straight.');const [a,b]=stem.geometry.points;if(Math.abs(Math.hypot(a.x-b.x,a.y-b.y)-encoding.spec.edgeLengthMm)>1e-7)throw new Error('Uniform unrooted display spacing was changed.');}

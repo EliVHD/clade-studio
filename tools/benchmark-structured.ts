@@ -24,12 +24,24 @@ for (const count of [80,300,600]) {
   const sample = await parseNewick('('+Array.from({length:count},(_,i)=>`'Synthetic long label ${i}':1`).join(',')+');');
   jobs.push({name:`Synthetic star ${count}`,graph:projectTree(sample,orient(sample,defaultRecipe(sample).root),{...projection,collapse:[]}),settings:{...DEFAULT_STRUCTURED,kind:'circular',outerRadiusMm:20,widthMm:120,heightMm:120}});
 }
+for (const count of [300,600]) {
+  const sample = await parseNewick('('+Array.from({length:count},(_,i)=>`T${i}:1`).join(',')+');');
+  jobs.push({name:`Spacious star ${count}`,graph:projectTree(sample,orient(sample,defaultRecipe(sample).root),{...projection,collapse:[]}),settings:{...DEFAULT_STRUCTURED,kind:'circular',innerRadiusMm:300,outerRadiusMm:500,widthMm:1200,heightMm:1200}});
+}
+let terminal=0;
+const balanced=(depth:number):string=>depth?`(${balanced(depth-1)},${balanced(depth-1)}):1`:`B${terminal++}:1`;
+const balancedSource=await parseNewick(`${balanced(8)};`);
+jobs.push({name:'Balanced 256 tips',graph:projectTree(balancedSource,orient(balancedSource,defaultRecipe(balancedSource).root),{...projection,collapse:[]}),settings:{...DEFAULT_STRUCTURED,kind:'rectangular'}});
+let comb='C0:1';
+for(let i=1;i<150;i++)comb=`(${comb},C${i}:1):1`;
+const combSource=await parseNewick(`${comb};`);
+jobs.push({name:'Comb 150 tips',graph:projectTree(combSource,orient(combSource,defaultRecipe(combSource).root),{...projection,collapse:[]}),settings:{...DEFAULT_STRUCTURED,kind:'rectangular'}});
 const results = [];
 for (const job of jobs) {
   const metrics = estimatedMeasurements(job.graph,job.settings), start = performance.now();
   const baseline = layoutCluster(job.graph,job.settings,metrics), qa = validateScene(job.graph,baseline), baselineMs = performance.now()-start;
   const begin = performance.now(), improved = improveReadability(job.graph,job.settings,metrics,'grow-page');
-  results.push({name:job.name,sourceSha256:job.graph.sourceSha256,settings:job.settings,nodes:job.graph.order.length,endpoints:job.graph.endpoints.length,baselineMs:Math.round(baselineMs),readabilityMs:Math.round(performance.now()-begin),...improved.readability,beforeLimited:qa.limited,afterLimited:improved.qa.limited,fontStatus:metrics.fontStatus});
+  results.push({name:job.name,sourceSha256:job.graph.sourceSha256,settings:job.settings,nodes:job.graph.order.length,endpoints:job.graph.endpoints.length,baselineMs:Math.round(baselineMs),readabilityMs:Math.round(performance.now()-begin),...improved.readability,beforeLimited:qa.limited,afterLimited:improved.qa.limited,beforeCounts:qa.issueCounts,afterCounts:improved.qa.issueCounts,beforeCompleteness:qa.completeness,afterCompleteness:improved.qa.completeness,beforeWork:qa.work,afterWork:improved.qa.work,fontStatus:metrics.fontStatus});
 }
 const report={implementationDigest,implementationFiles,date:new Date().toISOString(),node:process.version,platform:platform(),arch:arch(),cpu:cpus()[0]?.model,notes:['Single-run local timings; not a portable latency guarantee.','Estimated text metrics used, so outputs deliberately remain drafts. Browser measurement is tested separately.','Readability worker is cancellable; up to eight candidates, each with the existing 500000-comparison QA cap.'],results};
 await mkdir('outputs',{recursive:true});await writeFile('outputs/structured-benchmark.json',JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report,null,2));

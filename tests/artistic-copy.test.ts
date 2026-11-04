@@ -7,6 +7,16 @@ import { DEFAULT_STRUCTURED, estimatedMeasurements } from '../src/structured/lay
 import { makeStructuredView, checkStructuredPins, validateStructuredView } from '../src/structured/view.ts';
 import { makeArtisticCopy, applyArtisticEdit, validateArtistic } from '../src/structured/artistic.ts';
 import { validateScene } from '../src/structured/validate.ts';
+import { validateScene as validateV2 } from '../src/structured/validate-v2.ts';
+import { validateScene as validateV1 } from '../src/structured/validate-v1.ts';
+import { StructuredController } from '../src/structured/ui.ts';
+import { CURRENT_VALIDATION_PROFILE } from '../src/structured/validation-profile.ts';
+import { parseNewick } from '../src/newick.ts';
+import { defaultRecipe, orient, reduce } from '../src/science.ts';
+import { generateLayout, DEFAULT_PRESENTATION } from '../src/geometry.ts';
+import { History } from '../src/project.ts';
+import { startAuthoring } from '../src/project-v2.ts';
+import { acceptBasisEdit } from '../src/commands.ts';
 import { documentFromWorking, serializeProject, loadAnyProject } from '../src/project-v2.ts';
 import { acceptCommand } from '../src/commands.ts';
 import { exportStructuredFiles } from '../src/structured/export.ts';
@@ -67,4 +77,92 @@ test('artistic profiles save/reopen strictly, preserve the structured original a
   const group=(s:string)=>s.match(/<g id="tree-artwork"[\s\S]*?<\/g>/)![0];assert.equal(group(files['tree_unlabeled.svg']),group(files['tree_labeled.svg']));assert.equal(files['source_tree.nwk'],f.source.text);
   const forged=structuredClone(saved),v=forged.authoring.structuredViews![copy.id];v.scene.edgeStems[0].geometry={kind:'point',point:{x:0,y:0}};assert.throws(()=>acceptCommand(saved,forged,f.source));
   const wrong=structuredClone(copy);wrong.intent='cladogram';assert.equal(schemaValid(wrong,schema.$defs.structuredView,schema),false);
+});
+
+test('historical 600-tip artistic drags defer QA until release and remain one undoable edit', async () => {
+  const sample = await sampleTree(), source = await parseNewick('(' + Array.from({ length: 600 }, (_, i) => `T${i}:1`).join(',') + ');');
+  const recipe = { ...defaultRecipe(source), globalThreshold: 0 }; recipe.root.status = 'declared_assumption';
+  const rooted = orient(source, recipe.root), reduction = reduce(source, rooted, recipe);
+  const { authoring: _authoring, ...legacy } = sample.project;
+  let base = startAuthoring({ ...legacy, sourceText: source.text, sourceSha256: source.sha256, recipe, layout: generateLayout(rooted, reduction, DEFAULT_PRESENTATION, 'organic') }, source, null);
+  base = acceptBasisEdit(base, { ...sample.project.authoring.basis, sourceIds: [`source-${source.sha256}`] }, source);
+  const declared = structuredClone(base); declared.authoring.root = structuredClone(sample.project.authoring.root);
+  base = acceptCommand(base, declared, source, { notes: 'Declared the synthetic drag-test root.' });
+  const projection = { selection: { kind: 'all' as const }, collapse: [], expand: [], reveal: [], childOrder: {} };
+  const graph = projectTree(source, rooted, projection), settings = { ...DEFAULT_STRUCTURED, kind: 'circular' as const, innerRadiusMm: 300, outerRadiusMm: 500, widthMm: 1200, heightMm: 1200 };
+  const metrics = estimatedMeasurements(graph, settings); metrics.fontStatus = 'available';
+  const original = makeStructuredView(base, source, projection, settings, metrics, 'original', 'Original');
+  const id = graph.endpoints[0], copy = applyArtisticEdit(makeArtisticCopy(original, 'copy', 'Historical artistic copy'), { kind: 'stem-waypoints', edgeId: `display-edge-${id}`, points: [{ x: 900, y: 600 }] });
+  copy.validationProfile = 'compound-v2'; copy.qa = validateV2(copy.graph, copy.scene);
+  const proposal = structuredClone(base); proposal.authoring.structuredViews = { original, copy }; proposal.authoring.activeStructuredViewId = copy.id;
+  const saved = acceptCommand(base, proposal, source, { methods: ['compound-artistic-copy', 'compound-artistic-edit', 'compound-validation@2.0.0'], replace: true });
+
+  // A small DOM surface exercises the real controller render/status/summary paths.
+  const elements = new Map<string, any>();
+  const element = (id: string) => {
+    if (!elements.has(id)) elements.set(id, { value: '', checked: false, innerHTML: '', textContent: '', addEventListener() {}, querySelectorAll() { return []; } });
+    return elements.get(id);
+  };
+  const previousDocument = Object.getOwnPropertyDescriptor(globalThis, 'document');
+  Object.defineProperty(globalThis, 'document', { configurable: true, value: {
+    getElementById: element, querySelectorAll: () => [],
+    fonts: { ready: Promise.resolve(), load: async () => [], check: () => true },
+    createElement: () => ({ getContext: () => ({ font: '', measureText: () => ({ width: 10, actualBoundingBoxLeft: 0, actualBoundingBoxRight: 10, actualBoundingBoxAscent: 8, actualBoundingBoxDescent: 2 }) }) }),
+  } });
+  try {
+    for (const profile of [undefined, 'compound-v2'] as const) {
+      let historical = saved;
+      if (profile === undefined) {
+        const legacyProposal = structuredClone(saved), legacyView = legacyProposal.authoring.structuredViews!.copy;
+        delete legacyView.validationProfile; legacyView.qa = validateV1(legacyView.graph, legacyView.scene);
+        historical = acceptCommand(saved, legacyProposal, source, { methods: ['compound-validation@1.0.0'], notes: 'Captured a pre-profile artistic view for drag coverage.' });
+      }
+    for (const kind of ['node', 'label', 'waypoint'] as const) {
+      let project = structuredClone(historical), lookups = 0, status = '', summary = '';
+      const history = new History<typeof project>();
+      const controller = new StructuredController({ project: () => project, source: () => source, rooted: () => rooted, selected: () => [id],
+        commit: (next, evidence) => { const accepted = acceptCommand(project, next, source, evidence); history.push(project); project = accepted; },
+        render: () => { controller.render(); status = controller.qaStatus(); summary = controller.summary(controller.view!); },
+        fit() {}, focus() {}, calculate: async () => { throw new Error('Unexpected layout calculation.'); }, cancel() {}, toast() {}, canWork: () => true,
+      });
+      controller.enabled = true; controller.selected.add(id);
+      const qaFor = controller.qaFor.bind(controller);
+      controller.qaFor = view => { lookups++; assert.equal(controller.dragging, false, 'rendering must not ask for QA while moving'); return qaFor(view); };
+      controller.qaStatus(); // Cache a current check of the accepted historical geometry.
+      const before = structuredClone(project), beforeLookups = lookups;
+      assert.equal(controller.beginArtisticPointer(id, kind, { x: 900, y: 600 }), true);
+      for (let i = 1; i <= 4; i++) {
+        controller.moveArtisticPointer({ x: 900 + i, y: 600 + i });
+        assert.equal(status, 'MOVING · geometry unchecked');
+        assert.match(summary, /MOVING.*geometry unchecked/);
+        assert.equal(controller.exportable, false);
+      }
+      assert.equal(lookups, beforeLookups, 'no QA lookup or full validation on pointer movement');
+      assert.deepEqual(project, before, 'movement only changes the preview');
+      controller.endArtisticPointer();
+      const accepted = controller.view!;
+      assert.equal(accepted.validationProfile, CURRENT_VALIDATION_PROFILE);
+      assert.deepEqual(accepted.qa, validateScene(accepted.graph, accepted.scene));
+      assert.notEqual(accepted.scene.revision, copy.scene.revision);
+      assert.equal(accepted.artistic!.edits.length, copy.artistic!.edits.length + 1);
+      assert.equal(history.past.length, 1);
+      assert.deepEqual(history.undo(project), before);
+      assert.deepEqual(project.authoring.structuredViews!.original, original);
+
+      const beforeCancel = structuredClone(project);
+      controller.beginArtisticPointer(id, kind, { x: 900, y: 600 });
+      controller.moveArtisticPointer({ x: 910, y: 610 });
+      controller.endArtisticPointer(true);
+      assert.deepEqual(project, beforeCancel, 'Escape/pointer cancellation discards the unvalidated preview');
+      assert.equal(history.past.length, 0, 'cancellation creates no undo entry');
+      controller.beginArtisticPointer(id, kind, { x: 900, y: 600 });
+      controller.endArtisticPointer();
+      assert.deepEqual(project, beforeCancel, 'a click without movement creates no edit');
+      await new Promise(resolve => setImmediate(resolve)); // Finish font-status renders before removing the DOM.
+    }
+    }
+  } finally {
+    if (previousDocument) Object.defineProperty(globalThis, 'document', previousDocument);
+    else Reflect.deleteProperty(globalThis, 'document');
+  }
 });

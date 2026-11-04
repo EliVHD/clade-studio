@@ -20,7 +20,7 @@ export type Port = { id: string; nodeId: string; edgeId: string; end: 'parent' |
 export type EdgeStem = { id: string; edgeId: string; parentPortId: string; childPortId: string; geometry: Primitive };
 export type SceneLabel = { id: string; nodeId: string; text: string; position: Point; rotationDeg: number; anchor: 'start' | 'end' | 'middle'; corners: Point[] };
 export type SceneIssue = { type: 'incidence' | 'contact' | 'clearance' | 'labels' | 'bounds' | 'legibility' | 'font'; ids: string[]; detail: string };
-export type SceneQA = { status: 'checked' | 'draft'; coveragePassed: boolean; incidencePassed: boolean; crossingPassed: boolean; clearancePassed: boolean; labelCollisions: number; issues: SceneIssue[]; omittedIssueCount: number; checkedPairs: number; limited: boolean; limitations: string[] };
+export type SceneQA = { status: 'checked' | 'draft'; coveragePassed: boolean; incidencePassed: boolean; crossingPassed: boolean; clearancePassed: boolean; labelCollisions: number; issues: SceneIssue[]; omittedIssueCount: number; checkedPairs: number; limited: boolean; limitations: string[]; issueCounts?: Record<SceneIssue['type'], number>; completeness?: { incidence?: boolean; strokes: boolean; labels: boolean }; work?: number };
 export type MetricMeasure = { meaning:'substitutions-per-site'|'expected-changes'|'other-distance';unit:string;evidence:string;referenceIds:string[];sourceSha256:string;declaration:'curated'|'user-supplied' };
 export type MetricSpec = {measure:MetricMeasure;mmPerUnit:number;scaleBarValue:number};
 export type MetricScene = {spec:MetricSpec;distances:Record<string,number>;scaleBar:{value:number;from:Point;to:Point;label:string;position:Point;corners:Point[]}};
@@ -42,6 +42,7 @@ export type ArtisticEdit = {kind:'measure-labels';measurements:TextMeasurements}
 export type ArtisticOrigin = {viewId:string;sceneRevision:string;baseScene:RenderScene;edits:ArtisticEdit[]};
 export type StructuredView = {
   id: string; name: string; intent: 'cladogram' | 'phylogram' | 'taxonomy' | 'unrooted' | 'artistic'; adapter: 'clade-cluster-v1' | 'metric-distance-v1' | 'classification-rank-v1' | 'unrooted-angle-v1' | 'compound-artistic-v1'; artistic?:ArtisticOrigin; inputRevision: string; input: { basis: ScientificBasis; root: RootState; traversal: RootSpec; corrections: Correction[] };
+  validationProfile?: 'compound-v2' | 'compound-v3';
   projection: ProjectionSpec; graph: DisplayGraph; scene: RenderScene; qa: SceneQA;
   pinnedNodes: string[]; pinnedEdges: string[]; highlights: string[];
 };

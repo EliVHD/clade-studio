@@ -3,7 +3,7 @@ import type { ScientificBasis, WorkingProject } from '../model/document.ts';
 import type { ClassificationSpec, DisplayGraph, RenderScene, StructuredSettings, TextMeasurements, SceneQA, ProjectionSpec } from './types.ts';
 import { orient } from '../science.ts';
 import { projectTree } from './projection.ts';
-import { coordinateScene } from './coordinates.ts';
+import { buildSceneFromDepthCoordinates } from './coordinates.ts';
 import { validateStructuredSettings, sceneRevision } from './layout.ts';
 import { validateScene } from './validate.ts';
 import { digestSync } from '../provenance/sync-identity.ts';
@@ -50,14 +50,14 @@ export function layoutClassification(source:Source,graph:DisplayGraph,s:Structur
   validateStructuredSettings(s);validateClassificationSpec(spec,source);if(graph.sourceSha256!==source.sha256||graph.rootId!==source.rootId)throw new Error('A classification view must preserve its supplied top and parent orientation.');
   if(Object.values(nodes).some(offset=>offset.depth!==0))throw new Error('Classification levels are fixed by rank records and the stated interpolation policy. Adjust across groups or move labels; start a new view to remove old depth offsets.');
   const levels=classificationLevels(source,spec),displayed=Object.fromEntries(graph.order.map(id=>[id,levels[id]]));
-  const scene=coordinateScene(graph,s,m,displayed,classificationScale(graph,s,m),nodes,labels);
+  const scene=buildSceneFromDepthCoordinates(graph,s,m,displayed,classificationScale(graph,s,m),nodes,labels);
   scene.classification={spec:structuredClone(spec),topNodeId:source.rootId,levels,rankLevels:Object.fromEntries(spec.rankOrder.map((rank,i)=>[rank,(i+1)/(spec.rankOrder.length+1)]))};scene.revision=sceneRevision(scene);return scene;
 }
-export function validateClassificationScene(source:Source,graph:DisplayGraph,scene:RenderScene):SceneQA{
+export function validateClassificationScene(source:Source,graph:DisplayGraph,scene:RenderScene,baseValidator:typeof validateScene=validateScene):SceneQA{
   const data=scene.classification;if(!data||scene.metric)throw new Error('Classification scenes require rank records and must not carry a distance scale.');
   const levels=classificationLevels(source,data.spec);if(digestSync(levels)!==digestSync(data.levels)||data.topNodeId!==source.rootId)throw new Error('Classification levels disagree with source parent links/rank records.');
   const s=scene.settings,k=classificationScale(graph,s,scene.measurements),cx=s.widthMm/2,cy=s.heightMm/2,a=s.orientationDeg*Math.PI/180;
   const coordinate=(p:{x:number;y:number})=>s.kind==='rectangular'?((p.x-cx)*Math.cos(a)+(p.y-cy)*Math.sin(a)+cx-s.marginMm)/k:(Math.hypot(p.x-cx,p.y-cy)-s.innerRadiusMm)/k;
   if(scene.junctionGlyphs.some(g=>Math.abs(coordinate(g.anchor)-levels[g.nodeId])>1e-8)||scene.ports.some(p=>Math.abs(coordinate(p.point)-levels[p.nodeId])>1e-8))throw new Error('Classification geometry does not encode its declared rank placement.');
-  const qa=validateScene(graph,scene);qa.limitations=['Classification parent links are group membership, not evolutionary ancestry. No MRCA, elapsed time or evolutionary-distance interpretation is available.','Rank levels follow the supplied broad-to-specific policy. Missing ranks stay absent; explicitly unranked and unknown records use disclosed geometric interpolation, not invented taxa/ranks.','The supplied top classification node is independent of any biological rooting assumption; source branch lengths are retained only as input data and are ignored for placement.',...qa.limitations.filter(l=>!l.startsWith('Nonmetric cladogram:'))];return qa;
+  const qa=baseValidator(graph,scene);qa.limitations=['Classification parent links are group membership, not evolutionary ancestry. No MRCA, elapsed time or evolutionary-distance interpretation is available.','Rank levels follow the supplied broad-to-specific policy. Missing ranks stay absent; explicitly unranked and unknown records use disclosed geometric interpolation, not invented taxa/ranks.','The supplied top classification node is independent of any biological rooting assumption; source branch lengths are retained only as input data and are ignored for placement.',...qa.limitations.filter(l=>!l.startsWith('Nonmetric cladogram:'))];return qa;
 }

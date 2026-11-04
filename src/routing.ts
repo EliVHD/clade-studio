@@ -1,5 +1,5 @@
-import type { FitSettings, Layout, Point, Presentation, Reduction, Rooted, Route } from './types.ts';
-import { add, sub, distance, lerp, edgeWidth, flattenedEdge, moveNodes } from './geometry.ts';
+import type { FitSettings, Layout, Point, Presentation, Reduction, Rooted } from './types.ts';
+import { add, sub, distance, lerp, edgeWidth, flattenedEdge } from './geometry.ts';
 
 const dot = (a: Point, b: Point) => a.x * b.x + a.y * b.y;
 const scale = (a: Point, n: number): Point => ({ x: a.x * n, y: a.y * n });
@@ -15,7 +15,21 @@ function segmentDistance(a: Point, b: Point, c: Point, d: Point): number {
   return Math.min(pointDistance(a, c, d), pointDistance(b, c, d), pointDistance(c, a, b), pointDistance(d, a, b));
 }
 type Segment = [Point, Point];
-type Path = { points: Point[]; segments: Segment[]; length: number; box: number[] };
+type SegmentTree = { box: number[]; entries?: { segment: Segment; index: number }[]; left?: SegmentTree; right?: SegmentTree };
+type Path = { points: Point[]; segments: Segment[]; length: number; box: number[]; clips: Map<string, { segments: Segment[]; tree: SegmentTree }> };
+const segmentBox = ([a, b]: Segment, pad = 0): number[] => [Math.min(a.x, b.x) - pad, Math.min(a.y, b.y) - pad, Math.max(a.x, b.x) + pad, Math.max(a.y, b.y) + pad];
+const boxesOverlap = (a: number[], b: number[]): boolean => a[0] <= b[2] && b[0] <= a[2] && a[1] <= b[3] && b[1] <= a[3];
+function segmentTree(entries: { segment: Segment; index: number }[]): SegmentTree {
+  const box = entries.reduce((box, entry) => {
+    const b = segmentBox(entry.segment);
+    return [Math.min(box[0], b[0]), Math.min(box[1], b[1]), Math.max(box[2], b[2]), Math.max(box[3], b[3])];
+  }, [Infinity, Infinity, -Infinity, -Infinity]);
+  if (entries.length <= 4) return { box, entries };
+  const axis = box[2] - box[0] > box[3] - box[1] ? 'x' : 'y';
+  entries.sort((a, b) => a.segment[0][axis] + a.segment[1][axis] - b.segment[0][axis] - b.segment[1][axis] || a.index - b.index);
+  const middle = Math.floor(entries.length / 2);
+  return { box, left: segmentTree(entries.slice(0, middle)), right: segmentTree(entries.slice(middle)) };
+}
 function outsideDisk(segments: Segment[], center: Point, radius: number): Segment[] {
   return segments.flatMap(([a, b]) => {
     const v = sub(b, a), q = sub(a, center), aa = dot(v, v), bb = 2 * dot(q, v), cc = dot(q, q) - radius ** 2;
@@ -54,130 +68,309 @@ export function spreadForks(rooted: Rooted, reduction: Reduction, layout: Layout
   }
 }
 
-/** Local, deterministic route search. It measures complete sampled paths, not just chords.
- * Scientific endpoints, pins, waypoint count and topology are invariant. Each accepted
- * step lowers the same local objective: stroke spacing, fork angles, length and flow.
- * A fixed work budget bounds dense layouts; final adaptive geometry QA remains authoritative.
+export type RoutingDiagnostics = {
+  work: number;
+  candidateVisits: number;
+  candidatePairs: number;
+  evaluations: number;
+  attempts: number;
+  accepted: number;
+  attemptedItems: Record<string, number>;
+};
+export type RoutingResult = { refinedRoutes: number; routingLimited: boolean; routingDiagnostics: RoutingDiagnostics };
+export type RoutingLimits = { work?: number; evaluations?: number };
+type Quality = { bounds: number; contacts: number; clearance: number; cost: number };
+type PairQuality = { contacts: number; clearance: number; cost: number };
+const emptyQuality = (): Quality => ({ bounds: 0, contacts: 0, clearance: 0, cost: 0 });
+const better = (candidate: Quality, baseline: Quality): boolean => {
+  // Hard non-regression guards also apply when another category improves.
+  if (candidate.bounds > baseline.bounds || candidate.contacts > baseline.contacts) return false;
+  for (const key of ['bounds', 'contacts', 'clearance', 'cost'] as const) {
+    if (Math.abs(candidate[key] - baseline[key]) > 1e-7) return candidate[key] < baseline[key];
+  }
+  return false;
+};
+
+/** Deterministic, conflict-prioritized coordinate search with round-robin trials.
+ * Every trial compares complete local QA at the final geometry tolerance. No trial
+ * may add a contact or an out-of-page stroke to obtain a cosmetic improvement.
+ * Per-trial slices prevent one dense region from spending all remaining work.
  */
-export function refineRouting(rooted: Rooted, reduction: Reduction, layout: Layout, p: Presentation, junctions: string[], eligible: Set<string>, settings: FitSettings, flows: Record<string, Point>): { refinedRoutes: number; routingLimited: boolean } {
-  const strength = settings.routing ?? 0;
-  if (!strength || !eligible.size) return { refinedRoutes: 0, routingLimited: false };
-  const edges = reduction.visible.filter(id => rooted.nodes[id].parent), visible = new Set(edges), original = structuredClone(layout);
+export function refineRouting(rooted: Rooted, reduction: Reduction, layout: Layout, p: Presentation, junctions: string[], eligible: Set<string>, settings: FitSettings, flows: Record<string, Point>, limits: RoutingLimits = {}): RoutingResult {
+  const diagnostics: RoutingDiagnostics = { work: 0, candidateVisits: 0, candidatePairs: 0, evaluations: 0, attempts: 0, accepted: 0, attemptedItems: {} };
+  const strength = settings.routing ?? 0, forkSpread = settings.forkSpread ?? 0;
+  const result = (refinedRoutes: number, routingLimited: boolean): RoutingResult => ({ refinedRoutes, routingLimited, routingDiagnostics: diagnostics });
+  if ((!strength && !forkSpread) || !eligible.size) return result(0, false);
+  for (const limit of [limits.work, limits.evaluations]) if (limit !== undefined && (!Number.isSafeInteger(limit) || limit < 1)) throw new Error('Routing work limits must be positive safe integers.');
+  const workLimit = Math.min(4_000_000, limits.work ?? 4_000_000);
+  const evaluationLimit = Math.min(30_000, limits.evaluations ?? 30_000);
+  const edges = reduction.visible.filter(id => rooted.nodes[id].parent), visible = new Set(edges);
+  const pinned = new Set(layout.pinnedEdges), locked = new Set([rooted.rootId, ...layout.pinnedNodes]);
+  for (const id of pinned) { locked.add(id); if (rooted.nodes[id]?.parent) locked.add(rooted.nodes[id].parent!); }
+  const routes = [...eligible].filter(id => visible.has(id) && !pinned.has(id)).sort();
+  if (!routes.length) return result(0, false);
+  const originalRoutes = new Map(edges.map(id => [id, JSON.stringify(layout.routes[id])]));
+  const originalNodes = Object.fromEntries(junctions.map(id => [id, { ...layout.nodes[id] }]));
   const widths = Object.fromEntries(edges.map(id => [id, edgeWidth(rooted, id, p)]));
-  const extra = p.clearanceMm + strength * .8, padding = Math.max(...Object.values(widths)) + extra + .4;
-  const cell = Math.max(4, padding * 2, Math.max(p.widthMm, p.heightMm) / 32), cache = new Map<string, Path>(), bins = new Map<string, Set<string>>();
-  const tolerance = Math.min(.15, Math.max(.02, (p.clearanceMm + p.strokeMm) / 8));
+  const extra = p.clearanceMm + strength * .8;
+  const padding = Math.max(...Object.values(widths)) + extra + .4;
+  const cell = Math.max(4, padding * 2, Math.max(p.widthMm, p.heightMm) / 32);
+  const cache = new Map<string, Path>(), bins = new Map<string, Set<string>>();
+  const tolerance = p.toleranceMm / 2;
+  const incident = new Map<string, string[]>();
+  for (const id of Object.keys(layout.routes)) for (const node of [id, rooted.nodes[id]?.parent]) if (node) {
+    const list = incident.get(node) ?? []; list.push(id); incident.set(node, list);
+  }
   const keys = (box: number[]) => {
     const result: string[] = [];
-    // Index only the page plus its margin: extreme imported control points must not
-    // allocate an unbounded grid. Outside-page geometry is penalized separately.
-    for (let x = Math.floor(clamp(box[0] - padding, -padding, p.widthMm + padding) / cell); x <= Math.floor(clamp(box[2] + padding, -padding, p.widthMm + padding) / cell); x++) for (let y = Math.floor(clamp(box[1] - padding, -padding, p.heightMm + padding) / cell); y <= Math.floor(clamp(box[3] + padding, -padding, p.heightMm + padding) / cell); y++) result.push(`${x},${y}`);
+    for (let x = Math.floor(clamp(box[0] - padding, -padding, p.widthMm + padding) / cell); x <= Math.floor(clamp(box[2] + padding, -padding, p.widthMm + padding) / cell); x++) {
+      for (let y = Math.floor(clamp(box[1] - padding, -padding, p.heightMm + padding) / cell); y <= Math.floor(clamp(box[3] + padding, -padding, p.heightMm + padding) / cell); y++) result.push(`${x},${y}`);
+    }
     return result;
   };
   const path = (id: string): Path => {
-    const points = flattenedEdge(rooted, layout, id, tolerance), segments: Segment[] = points.slice(1).map((b, i) => [points[i], b]);
-    return { points, segments, length: segments.reduce((sum, [a, b]) => sum + distance(a, b), 0), box: [Math.min(...points.map(q => q.x)), Math.min(...points.map(q => q.y)), Math.max(...points.map(q => q.x)), Math.max(...points.map(q => q.y))] };
+    const points = flattenedEdge(rooted, layout, id, tolerance);
+    const segments: Segment[] = points.slice(1).map((b, i) => [points[i], b]);
+    return { points, segments, clips: new Map(), length: segments.reduce((sum, [a, b]) => sum + distance(a, b), 0), box: [Math.min(...points.map(q => q.x)), Math.min(...points.map(q => q.y)), Math.max(...points.map(q => q.x)), Math.max(...points.map(q => q.y))] };
   };
-  const update = (id: string) => {
+  const update = (id: string, next: Path) => {
     const old = cache.get(id); if (old) for (const key of keys(old.box)) bins.get(key)?.delete(id);
-    const next = path(id); cache.set(id, next);
+    cache.set(id, next);
     for (const key of keys(next.box)) { const bin = bins.get(key) ?? new Set<string>(); bin.add(id); bins.set(key, bin); }
   };
-  edges.forEach(update);
-  let work = 0, evaluations = 0, limited = false;
-  const pairCost = (aId: string, a: Path, bId: string, b: Path): number => {
+  for (const id of edges) update(id, path(id));
+  let limited = false, sliceEnd = workLimit;
+  const limitReached = (): boolean => {
+    if (diagnostics.work < workLimit && diagnostics.evaluations < evaluationLimit) return false;
+    limited = true; return true;
+  };
+  const spend = (): boolean => {
+    if (diagnostics.work >= workLimit || diagnostics.work >= sliceEnd) return false;
+    diagnostics.work++; return true;
+  };
+  const visit = (tree: SegmentTree, box: number[], action: (segment: Segment, index: number) => boolean): boolean => {
+    if (!spend()) return false;
+    if (!boxesOverlap(tree.box, box)) return true;
+    if (tree.entries) {
+      for (const entry of tree.entries) if (boxesOverlap(segmentBox(entry.segment), box)) {
+        if (!spend() || !action(entry.segment, entry.index)) return false;
+      }
+      return true;
+    }
+    return visit(tree.left!, box, action) && visit(tree.right!, box, action);
+  };
+  const clipped = (line: Path, center: Point | null) => {
+    const key = center ? `${center.x},${center.y}` : '';
+    let clip = line.clips.get(key);
+    if (!clip) {
+      const segments = center ? outsideDisk(line.segments, center, p.junctionMm) : line.segments;
+      clip = { segments, tree: segmentTree(segments.map((segment, index) => ({ segment, index }))) };
+      line.clips.set(key, clip);
+    }
+    return clip;
+  };
+  const pairQuality = (aId: string, a: Path, bId: string, b: Path, nodeOverride?: { id: string; point: Point }): PairQuality | null => {
     const aParent = rooted.nodes[aId].parent!, bParent = rooted.nodes[bId].parent!;
     const shared = [aId, aParent].find(id => id === bId || id === bParent);
-    const aa = shared ? outsideDisk(a.segments, layout.nodes[shared], p.junctionMm) : a.segments;
-    const bb = shared ? outsideDisk(b.segments, layout.nodes[shared], p.junctionMm) : b.segments;
-    const gap = (widths[aId] + widths[bId]) / 2 + extra + tolerance * 2;
+    const center = shared ? shared === nodeOverride?.id ? nodeOverride.point : layout.nodes[shared] : null;
+    const aa = clipped(a, center), bb = clipped(b, center);
+    const halfWidths = (widths[aId] + widths[bId]) / 2;
+    const gap = halfWidths + extra + p.toleranceMm;
     let cost = 0, nearest = Infinity;
-    for (const [v, w] of aa) for (const [x, y] of bb) {
-      if (++work > 4_000_000) { limited = true; return Infinity; }
-      if (Math.max(v.x, w.x) + gap < Math.min(x.x, y.x) || Math.max(x.x, y.x) + gap < Math.min(v.x, w.x) || Math.max(v.y, w.y) + gap < Math.min(x.y, y.y) || Math.max(x.y, y.y) + gap < Math.min(v.y, w.y)) continue;
-      const d = segmentDistance(v, w, x, y); nearest = Math.min(nearest, d);
-      // Integrated pressure favors short, divergent approaches over long parallel lanes.
-      cost += 4 * Math.max(0, gap - d) ** 2 * Math.min(distance(v, w), distance(x, y), 5) / gap ** 2;
+    for (const segment of aa.segments) {
+      const [v, w] = segment;
+      if (!visit(bb.tree, segmentBox(segment, gap), ([x, y]) => {
+        const d = segmentDistance(v, w, x, y); nearest = Math.min(nearest, d);
+        cost += 4 * Math.max(0, gap - d) ** 2 * Math.min(distance(v, w), distance(x, y), 5) / gap ** 2;
+        return true;
+      })) return null;
     }
     cost += 60 * Math.max(0, gap - nearest) ** 2 / gap ** 2;
-    if (aParent === bParent && (settings.forkSpread ?? 0) > 0) {
-      const tangent = (id: string, line: Path) => unit(sub(layout.lineStyle === 'straight' ? line.points[1] : layout.routes[id].segments[0].c1, layout.nodes[aParent]));
-      const angle = Math.acos(clamp(dot(tangent(aId, a), tangent(bId, b)), -1, 1));
-      cost += 80 * Math.max(0, (settings.forkSpread ?? 0) * .85 - angle) ** 2;
+    if (aParent === bParent && forkSpread > 0) {
+      // The sampled first span follows the actual curve, independent of mutable handles.
+      const tangent = (line: Path) => unit(sub(line.points[1], line.points[0]));
+      const angle = Math.acos(clamp(dot(tangent(a), tangent(b)), -1, 1));
+      cost += 80 * Math.max(0, forkSpread * .85 - angle) ** 2;
     }
-    return cost;
+    return { contacts: Number(nearest - halfWidths <= p.toleranceMm), clearance: Number(nearest - halfWidths - p.toleranceMm < p.clearanceMm), cost };
   };
-  const score = (affected: string[], node?: string): number => {
-    if (++evaluations > 30_000) { limited = true; return Infinity; }
-    const candidates = new Map(affected.map(id => [id, path(id)])), pairs = new Set<string>();
-    let cost = node ? distance(layout.nodes[node], original.nodes[node]) ** 2 * .015 : 0;
-    for (const [id, line] of candidates) {
-      cost += line.length * .035;
-      for (const q of line.points) cost += 30 * (Math.max(0, widths[id] / 2 - q.x, q.x - p.widthMm + widths[id] / 2) ** 2 + Math.max(0, widths[id] / 2 - q.y, q.y - p.heightMm + widths[id] / 2) ** 2);
-      const flow = flows[id];
-      if (flow) for (const [a, b] of line.segments) cost += 20 * Math.min(0, dot(sub(b, a), unit(flow))) ** 2 * Math.hypot(flow.x, flow.y);
-      // Penalize loops and fold-backs within an edge, outside adjacent sampled spans.
-      for (let i = 0; i < line.segments.length; i++) for (let j = i + 2; j < line.segments.length; j++) {
-        if (++work > 4_000_000) { limited = true; return Infinity; }
-        const [a, b] = line.segments[i], [c, d] = line.segments[j];
-        if (distance(b, c) > widths[id] * 2 && segmentDistance(a, b, c, d) < widths[id]) cost += 250;
+  const pairCache = new Map<string, PairQuality>();
+  const unaryCache = new Map<string, Quality>();
+  const unaryQuality = (id: string, line: Path): Quality | null => {
+    const value = emptyQuality(), half = widths[id] / 2 + p.toleranceMm;
+    value.bounds = Number(line.points.some(q => q.x < half || q.y < half || q.x > p.widthMm - half || q.y > p.heightMm - half));
+    value.cost = line.length * .035;
+    const flow = flows[id];
+    for (const q of line.points) value.cost += 30 * (Math.max(0, half - q.x, q.x - p.widthMm + half) ** 2 + Math.max(0, half - q.y, q.y - p.heightMm + half) ** 2);
+    if (flow) for (const [a, b] of line.segments) value.cost += 20 * Math.min(0, dot(sub(b, a), unit(flow))) ** 2 * Math.hypot(flow.x, flow.y);
+    const along = [0];
+    for (const [a, b] of line.segments) along.push(along.at(-1)! + distance(a, b));
+    const tree = clipped(line, null).tree;
+    for (let i = 0; i < line.segments.length && !value.contacts; i++) {
+      const segment = line.segments[i], [a, b] = segment;
+      if (!visit(tree, segmentBox(segment, widths[id] + p.toleranceMm), ([c, d], j) => {
+        if (j > i + 1 && along[j] - along[i + 1] >= widths[id] + 2 * p.toleranceMm && segmentDistance(a, b, c, d) <= widths[id] + p.toleranceMm) value.contacts = 1;
+        return true;
+      })) return null;
+    }
+    value.cost += value.contacts * 250;
+    return value;
+  };
+  // Stream pairs in stable input/bin order. Charge every visit before deduplication:
+  // a large fork or a densely populated bin must not bypass the work limit.
+  function* pairsFor(affected: string[], candidates: Map<string, Path>): Generator<string | null> {
+    const pairs = new Set<string>();
+    const pairFor = (id: string, other: string): string | undefined | null => {
+      if (!spend()) return null;
+      diagnostics.candidateVisits++;
+      if (id === other) return undefined;
+      const key = id < other ? `${id}|${other}` : `${other}|${id}`;
+      if (pairs.has(key)) return undefined;
+      pairs.add(key); diagnostics.candidatePairs++; return key;
+    };
+    for (const id of affected) {
+      for (const other of affected) {
+        const key = pairFor(id, other);
+        if (key === null) { yield null; return; }
+        if (key !== undefined) yield key;
       }
-      const neighbors = new Set(affected);
-      for (const key of keys(line.box)) for (const other of bins.get(key) ?? []) neighbors.add(other);
-      for (const other of neighbors) if (other !== id) pairs.add([id, other].sort().join('|'));
+      // Use the union of old and candidate neighbors for an equivalent comparison.
+      for (const line of [cache.get(id)!, candidates.get(id)!]) for (const cellKey of keys(line.box)) {
+        if (!spend()) { yield null; return; }
+        for (const other of bins.get(cellKey) ?? []) {
+          const key = pairFor(id, other);
+          if (key === null) { yield null; return; }
+          if (key !== undefined) yield key;
+        }
+      }
     }
-    for (const pair of pairs) {
-      const [a, b] = pair.split('|'); cost += pairCost(a, candidates.get(a) ?? cache.get(a)!, b, candidates.get(b) ?? cache.get(b)!);
-      if (limited) return Infinity;
+  }
+  const evaluate = (affected: string[], candidates: Map<string, Path>, pairs: string[], baseline: boolean, node?: { id: string; point: Point }): Quality | null => {
+    if (diagnostics.evaluations >= evaluationLimit) return null;
+    diagnostics.evaluations++;
+    const value = emptyQuality();
+    if (node) value.cost += distance(node.point, originalNodes[node.id]) ** 2 * .015;
+    for (const id of affected) {
+      let unary = baseline ? unaryCache.get(id) : undefined;
+      if (!unary) { unary = unaryQuality(id, candidates.get(id)!) ?? undefined; if (!unary) return null; if (baseline) unaryCache.set(id, unary); }
+      value.bounds += unary.bounds; value.contacts += unary.contacts; value.clearance += unary.clearance; value.cost += unary.cost;
     }
-    return cost;
+    for (const key of pairs) {
+      const [a, b] = key.split('|');
+      let pair = baseline ? pairCache.get(key) : undefined;
+      if (!pair) {
+        pair = pairQuality(a, candidates.get(a) ?? cache.get(a)!, b, candidates.get(b) ?? cache.get(b)!, baseline ? node : undefined) ?? undefined;
+        if (!pair) return null;
+        if (baseline) pairCache.set(key, pair);
+      }
+      value.contacts += pair.contacts; value.clearance += pair.clearance; value.cost += pair.cost;
+    }
+    return value;
   };
   const directions = Array.from({ length: 8 }, (_, i) => ({ x: Math.cos(i * Math.PI / 4), y: Math.sin(i * Math.PI / 4) }));
-  for (const factor of [1, .5, .25, .125]) {
-    const step = Math.max(2, settings.junctionSpacingMm, padding * 2) * strength * factor;
-    for (const node of junctions) {
-      if (limited) break;
-      const incident = Object.keys(layout.routes).filter(id => id === node || rooted.nodes[id].parent === node);
-      const affected = incident.filter(id => visible.has(id));
-      const start = { ...layout.nodes[node] }, routes = Object.fromEntries(incident.map(id => [id, structuredClone(layout.routes[id])]));
-      let best = score(affected, node), winner = start, bestRoutes = routes;
-      for (const direction of directions) {
-        if (limited) break;
-        layout.nodes[node] = { ...start }; for (const id of incident) layout.routes[id] = structuredClone(routes[id]);
-        const next = add(start, scale(direction, step));
-        if (next.x < p.strokeMm || next.y < p.strokeMm || next.x > p.widthMm - p.strokeMm || next.y > p.heightMm - p.strokeMm) continue;
-        moveNodes(layout, rooted, [node], sub(next, start));
-        const value = score(affected, node);
-        if (value < best - 1e-7) { best = value; winner = { ...layout.nodes[node] }; bestRoutes = Object.fromEntries(incident.map(id => [id, structuredClone(layout.routes[id])])); }
-      }
-      layout.nodes[node] = winner; for (const id of incident) layout.routes[id] = bestRoutes[id]; affected.forEach(update);
+  type Job = { key: string; node?: string; route?: string; fork?: string; incident: string[]; affected: string[]; modes: number; pressure: number };
+  const routeSet = new Set(routes);
+  const forks = forkSpread && layout.lineStyle !== 'straight' ? reduction.visible.filter(id => rooted.nodes[id].children.filter(child => visible.has(child)).length > 1).map(id => ({ id, affected: rooted.nodes[id].children.filter(child => routeSet.has(child)) })).filter(fork => fork.affected.length) : [];
+  const jobs: Job[] = [
+    ...junctions.filter(id => strength > 0 && !locked.has(id)).map(id => ({ key: `node:${id}`, node: id, incident: incident.get(id) ?? [], affected: (incident.get(id) ?? []).filter(edge => visible.has(edge)), modes: 8, pressure: 0 })),
+    ...forks.map(fork => ({ key: `fork:${fork.id}`, fork: fork.id, incident: fork.affected, affected: fork.affected, modes: 1, pressure: 0 })),
+    ...(layout.lineStyle === 'straight' || !strength ? [] : routes.map(id => ({ key: `route:${id}`, route: id, incident: [id], affected: [id], modes: 10, pressure: 0 }))),
+  ];
+  if (!jobs.length) return result(0, false);
+  // A bounded sampled conflict pass prioritizes the queue; every item still gets a
+  // first trial before another item receives a second trial at the same scale.
+  sliceEnd = Math.min(workLimit, Math.floor(workLimit * .1));
+  const pressure = new Map<string, number>(), seen = new Set<string>();
+  pressurePass: for (const job of jobs) {
+    const current = new Map(job.affected.map(id => [id, cache.get(id)!]));
+    for (const key of pairsFor(job.affected, current)) {
+      if (key === null) break pressurePass;
+      if (seen.has(key)) continue; seen.add(key);
+      const [a, b] = key.split('|'), pair = pairQuality(a, cache.get(a)!, b, cache.get(b)!);
+      if (!pair) break pressurePass;
+      pairCache.set(key, pair);
+      const weight = pair.contacts * 100000 + pair.clearance * 1000 + pair.cost;
+      pressure.set(a, (pressure.get(a) ?? 0) + weight); pressure.set(b, (pressure.get(b) ?? 0) + weight);
     }
-    if (layout.lineStyle !== 'straight') for (const id of eligible) {
-      if (limited) break;
-      const originalRoute = structuredClone(layout.routes[id]); let winner: Route = originalRoute, best = score([id]);
-      // Search both sides, then individual handles. No extra biological or routing nodes.
-      for (const mode of ['both', 'start', 'end', 'turn-start', 'turn-end'] as const) for (const sign of [-1, 1]) {
-        if (limited) break;
-        layout.routes[id] = structuredClone(originalRoute); let start = layout.nodes[rooted.nodes[id].parent!];
-        for (const s of layout.routes[id].segments) {
-          const v = sub(s.end, start), normal = unit({ x: -v.y, y: v.x }), shift = scale(normal, sign * Math.min(step * 2, distance(start, s.end) * .3));
-          if (mode === 'turn-start' || mode === 'turn-end') {
-            const turn = (handle: Point, origin: Point) => {
-              const v = sub(handle, origin), angle = sign * Math.PI / 6 * strength * Math.sqrt(factor);
-              return add(origin, { x: v.x * Math.cos(angle) - v.y * Math.sin(angle), y: v.x * Math.sin(angle) + v.y * Math.cos(angle) });
-            };
-            if (mode === 'turn-start') s.c1 = turn(s.c1, start); else s.c2 = turn(s.c2, s.end);
-          } else {
-            if (mode !== 'end') s.c1 = add(s.c1, shift);
-            if (mode !== 'start') s.c2 = add(s.c2, shift);
-          }
-          start = s.end;
-        }
-        const value = score([id]); if (value < best - 1e-7) { best = value; winner = structuredClone(layout.routes[id]); }
-      }
-      layout.routes[id] = winner; update(id);
-    }
-    if (limited) break;
+    job.pressure = job.affected.reduce((sum, id) => sum + (pressure.get(id) ?? 0), 0);
   }
-  return { refinedRoutes: edges.filter(id => JSON.stringify(original.routes[id]) !== JSON.stringify(layout.routes[id])).length, routingLimited: limited };
+  if (limitReached()) return result(0, true);
+  for (const job of jobs) job.pressure = job.affected.reduce((sum, id) => sum + (pressure.get(id) ?? 0), 0);
+  jobs.sort((a, b) => b.pressure - a.pressure || a.key.localeCompare(b.key));
+  const forkRoutes = forkSpread && layout.lineStyle !== 'straight' ? { ...layout, nodes: { ...layout.nodes }, routes: { ...layout.routes, ...Object.fromEntries(routes.map(id => [id, structuredClone(layout.routes[id])])) } } : null;
+  if (forkRoutes) spreadForks(rooted, reduction, forkRoutes, new Set(routes), forkSpread, flows);
+  const invalidate = (affected: string[]) => {
+    const changed = new Set(affected);
+    for (const id of affected) unaryCache.delete(id);
+    for (const key of pairCache.keys()) if (key.split('|').some(id => changed.has(id))) pairCache.delete(key);
+  };
+  for (const factor of [1, .5, .25, .125]) {
+    const nodeOrigins = Object.fromEntries(jobs.filter(job => job.node).map(job => [job.node!, { ...layout.nodes[job.node!] }]));
+    const step = Math.max(2, settings.junctionSpacingMm, padding * 2) * strength * factor;
+    for (let mode = 0; mode < 11; mode++) {
+      const round = jobs.filter(job => mode < job.modes);
+      for (let index = 0; index < round.length; index++) {
+        if (limitReached()) break;
+        const job = round[index];
+        // Enumeration and QA share this item's fair slice, including duplicates.
+        sliceEnd = Math.min(workLimit, diagnostics.work + Math.max(1, Math.floor((workLimit - diagnostics.work) / (round.length - index))));
+        diagnostics.attempts++; diagnostics.attemptedItems[job.key] = (diagnostics.attemptedItems[job.key] ?? 0) + 1;
+        const saved = new Map(job.incident.map(id => [id, layout.routes[id]]));
+        const start = job.node ? layout.nodes[job.node] : undefined;
+        for (const id of job.incident) layout.routes[id] = structuredClone(layout.routes[id]);
+        if (job.node) {
+          const next = add(nodeOrigins[job.node], scale(directions[mode], step));
+          layout.nodes[job.node] = next;
+          for (const id of job.incident) {
+            const route = layout.routes[id];
+            if (rooted.nodes[id].parent === job.node) route.segments[0].c1 = add(route.segments[0].c1, sub(next, start!));
+            if (id === job.node) { route.segments.at(-1)!.c2 = add(route.segments.at(-1)!.c2, sub(next, start!)); route.segments.at(-1)!.end = { ...next }; }
+          }
+        } else if (job.fork) {
+          const delta = sub(layout.nodes[job.fork], forkRoutes!.nodes[job.fork]);
+          for (const id of job.affected) layout.routes[id].segments[0].c1 = add(forkRoutes!.routes[id].segments[0].c1, delta);
+        } else {
+          const id = job.route!;
+          {
+            const trial = mode, sign = trial % 2 ? 1 : -1;
+            const kind = ['both', 'start', 'end', 'turn-start', 'turn-end'][Math.floor(trial / 2)];
+            let from = layout.nodes[rooted.nodes[id].parent!];
+            for (const segment of layout.routes[id].segments) {
+              const chord = sub(segment.end, from), normal = unit({ x: -chord.y, y: chord.x });
+              const shift = scale(normal, sign * Math.min(step * 2, distance(from, segment.end) * .3));
+              const turn = (handle: Point, origin: Point) => {
+                const v = sub(handle, origin), angle = sign * Math.PI / 6 * strength * Math.sqrt(factor);
+                return add(origin, { x: v.x * Math.cos(angle) - v.y * Math.sin(angle), y: v.x * Math.sin(angle) + v.y * Math.cos(angle) });
+              };
+              if (kind === 'turn-start') segment.c1 = turn(segment.c1, from);
+              else if (kind === 'turn-end') segment.c2 = turn(segment.c2, segment.end);
+              else { if (kind !== 'end') segment.c1 = add(segment.c1, shift); if (kind !== 'start') segment.c2 = add(segment.c2, shift); }
+              from = segment.end;
+            }
+          }
+        }
+        const candidates = new Map(job.affected.map(id => [id, path(id)]));
+        const pairs: string[] = [];
+        let pairsComplete = true;
+        for (const key of pairsFor(job.affected, candidates)) {
+          if (key === null) { pairsComplete = false; break; }
+          pairs.push(key);
+        }
+        const oldPaths = new Map(job.affected.map(id => [id, cache.get(id)!]));
+        const baseline = pairsComplete ? evaluate(job.affected, oldPaths, pairs, true, job.node ? { id: job.node, point: start! } : undefined) : null;
+        const candidate = baseline ? evaluate(job.affected, candidates, pairs, false, job.node ? { id: job.node, point: layout.nodes[job.node] } : undefined) : null;
+        if (baseline && candidate && better(candidate, baseline)) {
+          diagnostics.accepted++; invalidate(job.affected);
+          for (const [id, line] of candidates) update(id, line);
+        } else {
+          if (!baseline || !candidate) limited = true;
+          if (job.node) layout.nodes[job.node] = start!;
+          for (const [id, route] of saved) layout.routes[id] = route;
+        }
+      }
+      if (limitReached()) break;
+    }
+    if (limitReached()) break;
+  }
+  return result(edges.filter(id => originalRoutes.get(id) !== JSON.stringify(layout.routes[id])).length, limited);
 }
